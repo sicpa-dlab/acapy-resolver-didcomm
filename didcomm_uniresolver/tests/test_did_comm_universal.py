@@ -7,8 +7,8 @@ from asynctest import mock as async_mock
 
 from aries_cloudagent.connections.models.diddoc_v2 import DIDDoc
 from aries_cloudagent.resolver.base import DIDNotFound, ResolverError
-from .. import did_comm_universal as test_module
-from ..did_comm_universal import DIDCommUniversalDIDResolver
+from .. import didcomm_universal as test_module
+from ..didcomm_universal import DIDCommUniversalDIDResolver
 
 # pylint: disable=redefined-outer-name
 
