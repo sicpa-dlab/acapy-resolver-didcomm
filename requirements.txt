@@ -1,3 +1,3 @@
-aries-cloudagent@git+https://github.com/rd-dlab/aries-cloudagent-python@feature/did-comm-universal-resolver
+aries-cloudagent@git+https://github.com/rd-dlab/aries-cloudagent-python@feature/did-resolver
 pyyaml~=5.3.1
 flake8

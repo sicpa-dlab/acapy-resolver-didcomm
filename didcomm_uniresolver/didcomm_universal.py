@@ -4,13 +4,12 @@ import os
 from pathlib import Path
 from typing import Sequence
 
-import aiohttp
 import yaml
 from aries_cloudagent.config.injection_context import InjectionContext
 from aries_cloudagent.connections.models.diddoc_v2 import DIDDoc
 from aries_cloudagent.core.profile import Profile
 from aries_cloudagent.resolver.base import (
-    BaseDIDResolver, DIDNotFound, ResolverError, ResolverType
+    BaseDIDResolver, ResolverError, ResolverType
 )
 from aries_cloudagent.resolver.did import DID
 
@@ -63,15 +62,3 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
 
     async def _resolve(self, _profile: Profile, did: DID) -> DIDDoc:
         """Resolve DID through remote universal resolver."""
-        '''async with aiohttp.ClientSession() as session:
-            async with session.get(f"{self._endpoint}/{did}") as resp:
-                if resp.status == 200:
-                    doc = await resp.json()
-                    return DIDDoc.deserialize(doc["didDocument"])
-                if resp.status == 404:
-                    raise DIDNotFound(f"{did} not found by {self.__class__.__name__}")
-
-                text = await resp.text()
-                raise ResolverError(
-                    f"Unexecpted status from universal resolver ({resp.status}): {text}"
-                )'''
