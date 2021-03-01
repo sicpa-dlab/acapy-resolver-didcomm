@@ -1,6 +1,8 @@
 """DID Resolution Protocol v0.9 message and handler definitions."""
 
 import json
+import requests
+import logging
 from datetime import datetime
 from typing import Union
 
@@ -17,6 +19,7 @@ from aries_cloudagent.protocols.didcomm_prefix import DIDCommPrefix
 
 from ..acapy_tools import expand_message_class
 
+LOGGER = logging.getLogger(__name__)
 
 class DIDResolutionMessage(AgentMessage):
     """Base Message class for messages used for resolution."""
@@ -86,16 +89,16 @@ class ResolveDid(DIDResolutionMessage):
             context: request context
             responder: responder callback
         """
-        self._logger.debug("ResolveDidHandler called with context %s", context)
+        LOGGER.debug("ResolveDidHandler called with context %s", context)
         assert isinstance(context.message, ResolveDid)
 
-        self._logger.info("Received resolve did: %s", context.message.did)
+        LOGGER.info("Received resolve did: %s", context.message.did)
 
         resolver_url = context.settings.get("did_resolution_service")
         try:
             did_document = self.resolve_did(context.message.did, resolver_url)
         except Exception as err:
-            self._logger.error(str(err))
+            LOGGER.error(str(err))
             msg = (f"Could not resolve DID {context.message.did} using service"
                    f" {resolver_url}")
             raise HandlerException(msg)
@@ -158,11 +161,11 @@ class ResolveDidResult(DIDResolutionMessage):
             context: request context
             responder: responder callback
         """
-        self._logger.debug("ResolveDidResultHandler called with context %s", context)
+        LOGGER.debug("ResolveDidResultHandler called with context %s", context)
         assert isinstance(context.message, ResolveDidResult)
 
-        self._logger.info("Received resolve did document")
-        self._logger.debug("did document: %s", context.message.did_document)
+        LOGGER.info("Received resolve did document")
+        LOGGER.debug("did document: %s", context.message.did_document)
 
         did_document = json.loads(context.message.did_document)
 

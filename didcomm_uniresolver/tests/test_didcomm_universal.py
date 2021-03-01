@@ -94,11 +94,7 @@ class MockClientSession:
 
 @pytest.fixture
 def mock_client_session():
-    temp = test_module.aiohttp.ClientSession
-    session = MockClientSession()
-    test_module.aiohttp.ClientSession = session
-    yield session
-    test_module.aiohttp.ClientSession = temp
+    pass
 
 
 @pytest.mark.asyncio
