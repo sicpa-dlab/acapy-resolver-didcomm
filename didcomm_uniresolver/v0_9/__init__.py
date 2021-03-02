@@ -1,23 +1,28 @@
 """DID Resolution Protocol v0.9 message and handler definitions."""
 
 import json
-import aiohttp
 import logging
 from datetime import datetime
 from typing import Union
 
+import aiohttp
+from aries_cloudagent.messaging.agent_message import AgentMessage
 from aries_cloudagent.messaging.base_handler import (
     BaseResponder, HandlerException, RequestContext
 )
-from marshmallow import fields
-
-from aries_cloudagent.messaging.agent_message import AgentMessage
 from aries_cloudagent.messaging.util import datetime_now, datetime_to_str
 from aries_cloudagent.messaging.valid import INDY_ISO8601_DATETIME
-
 from aries_cloudagent.protocols.didcomm_prefix import DIDCommPrefix
+from aries_cloudagent.protocols.problem_report.v1_0.message import (
+    ProblemReport, ProblemReportSchema
+)
+from aries_cloudagent.resolver.base import DIDNotFound
+from marshmallow import fields
 
 from ..acapy_tools import expand_message_class
+from ..acapy_tools.awaitable_handler import (
+    AwaitableErrorHandler, AwaitableHandler
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -158,31 +163,55 @@ class ResolveDIDResult(DIDResolutionMessage):
             did_document = json.dumps(did_document)
         self.did_document = did_document
 
-    async def handle(self, context: RequestContext, responder: BaseResponder):
-        """
-        Message handler logic a did resolve result.
+    class Handler(AwaitableHandler):
+        """Provider for handle to await response."""
 
-        Args:
-            context: request context
-            responder: responder callback
-        """
-        LOGGER.debug("ResolveDidResultHandler called with context %s", context)
-        assert isinstance(context.message, ResolveDIDResult)
+        async def do_handle(self, context: RequestContext, responder: BaseResponder):
+            """
+            Message handler logic a did resolve result.
 
-        LOGGER.info("Received resolve did document")
-        LOGGER.debug("did document: %s", context.message.did_document)
+            Args:
+                context: request context
+                responder: responder callback
+            """
+            LOGGER.debug("ResolveDidResultHandler called with context %s", context)
+            assert isinstance(context.message, ResolveDIDResult)
 
-        did_document = json.loads(context.message.did_document)
+            LOGGER.info("Received resolve did document")
+            LOGGER.debug("did document: %s", context.message.did_document)
 
-        await responder.send_webhook(
-            "resolve_did_result",
-            {
-                "connection_id": context.connection_record.connection_id,
-                "message_id": context.message._id,
-                "did_document": did_document,
-                "state": "received",
-            },
-        )
+            did_document = json.loads(context.message.did_document)
+
+            await responder.send_webhook(
+                "resolve_did_result",
+                {
+                    "connection_id": context.connection_record.connection_id,
+                    "message_id": context.message._id,
+                    "did_document": did_document,
+                    "state": "received",
+                },
+            )
+
+
+class ResolveDIDProblemReport(DIDResolutionMessage, ProblemReport):
+    """Message for reporting errors from the remote resolver."""
+
+    message_type = "problem-report"
+    fields_from = ProblemReportSchema
+
+    class Handler(AwaitableErrorHandler):
+        """Handler for DID resolution problem reports."""
+
+        async def do_handle(self, context: RequestContext, responder: BaseResponder):
+            """Handle problem reports."""
+            report: ResolveDIDProblemReport = context.message
+            LOGGER.warning("Received problem report: %s", report.explain_ltxt)
+
+        def map_exception(self, message: "ResolveDIDProblemReport"):
+            """Map report message to an exception."""
+            return DIDNotFound(
+                f"DID not found on remote resolver: {message.explain_ltxt}"
+            )
 
 
 MESSAGE_TYPES = DIDCommPrefix.qualify_all({
