@@ -14,13 +14,13 @@ if __name__ == '__main__':
         LONG_DESCRIPTION = fh.read()
 
     setup(
-        name='aries-acapy-plugin-did-comm-uniresolver',
+        name='aries-acapy-plugin-didcomm-uniresolver',
         version='0.1.0',
         author='burdettadam <burdettadam@gmail.com>',
         description='Aries Cloud Agent - Python Plugin for DIDCOMM Universal Resolver',
         long_description=LONG_DESCRIPTION,
         long_description_content_type='text/markdown',
-        url='https://github.com/rd-dlab/aries-acapy-plugin-did-comm-uniresolver',
+        url='https://github.com/rd-dlab/aries-acapy-plugin-didcomm-uniresolver',
         license='Apache 2.0',
         packages=find_packages(),
         install_requires=parse_requirements('requirements.txt'),
