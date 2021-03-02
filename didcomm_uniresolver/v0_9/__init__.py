@@ -29,7 +29,7 @@ LOGGER = logging.getLogger(__name__)
 
 class DIDResolutionMessage(AgentMessage):
     """Base Message class for messages used for resolution."""
-    protocol = "https://didcom.org/did_resolution/0.9"
+    protocol = "https://didcomm.org/did_resolution/0.9"
 
 
 @expand_message_class
@@ -103,7 +103,7 @@ class ResolveDID(DIDResolutionMessage):
 
         LOGGER.info("Received resolve did: %s", context.message.did)
 
-        resolver_url = context.settings.get("did_resolution_service")
+        resolver_url = context.settings.get("didcomm_uniresolver.endpoint")
         try:
             did_document = await self.resolve_did(context.message.did, resolver_url)
         except Exception as err:
@@ -131,17 +131,16 @@ class ResolveDIDResult(DIDResolutionMessage):
             description="Time message was sent, ISO8601 with space date/time separator",
             **INDY_ISO8601_DATETIME,
         )
-        did_document = fields.Str(
+        did_document = fields.Dict(
             required=True,
-            description="DID",
-            example='{"@context": "https://w3id.org/did/v0.11", "id": "did:sov:xyz",}'
+            description="DID Document",
         )
 
     def __init__(
         self,
         *,
         sent_time: Union[str, datetime] = None,
-        did_document: str = None,
+        did_document: dict = None,
         localization: str = None,
         **kwargs,
     ):
@@ -159,8 +158,6 @@ class ResolveDIDResult(DIDResolutionMessage):
         if localization:
             self._decorators["l10n"] = localization
         self.sent_time = datetime_to_str(sent_time)
-        if not isinstance(did_document, str):
-            did_document = json.dumps(did_document)
         self.did_document = did_document
 
     class Handler(AwaitableHandler):
