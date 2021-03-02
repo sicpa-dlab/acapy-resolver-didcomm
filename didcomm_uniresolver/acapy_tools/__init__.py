@@ -6,6 +6,7 @@ from aries_cloudagent.messaging.agent_message import AgentMessageSchema
 from aries_cloudagent.messaging.request_context import RequestContext
 from aries_cloudagent.messaging.models.base import BaseModel, BaseModelSchema
 
+
 def expand_message_class(cls):
     """Class decorator for removing boilerplate of AgentMessages."""
     # pylint: disable=protected-access
@@ -57,6 +58,8 @@ def expand_message_class(cls):
         cls._get_handler_class = lambda: cls.Handler
     elif hasattr(cls, "handler"):
         cls.Meta.handler_class = cls.handler
+    else:
+        cls._get_handler_class = lambda: cls.Handler
 
     return cls
 
