@@ -1,7 +1,7 @@
 """DID Resolution Protocol v0.9 message and handler definitions."""
 
 import json
-import requests
+import aiohttp
 import logging
 from datetime import datetime
 from typing import Union
@@ -75,11 +75,12 @@ class ResolveDid(DIDResolutionMessage):
         resolver_url has to contain a {did} field.
         """
         url = resolver_url.format(did=did)
-        response = requests.get(url)
-        if response.ok:
-            content = response.json()
-            return content['didDocument']
-        raise HandlerException(f"Failed to resolve DID {did} using URL {url}")
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if resp.status >= 200 and resp.status < 400:
+                    content = response.json()
+                    return content['didDocument']
+                raise HandlerException(f"Failed to resolve DID {did} using URL {url} with status {resp.status}")
 
 
     async def handle(self, context: RequestContext, responder: BaseResponder):

@@ -9,7 +9,7 @@ Resolver instance over DIDComm messaging.
 First, install this plugin into your environment.
 
 ```sh
-$ pip install git+https://github.com/rd-dlab/aries-acapy-plugin-did-comm-uniresolver.git
+$ pip install git+https://github.com/rd-dlab/aries-acapy-plugin-didcomm-uniresolver.git
 ```
 
 When starting up ACA-Py, load the plugin along with any other startup
