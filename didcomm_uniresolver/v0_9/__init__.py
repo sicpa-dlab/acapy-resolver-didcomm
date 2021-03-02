@@ -21,13 +21,14 @@ from ..acapy_tools import expand_message_class
 
 LOGGER = logging.getLogger(__name__)
 
+
 class DIDResolutionMessage(AgentMessage):
     """Base Message class for messages used for resolution."""
     protocol = "https://didcom.org/did_resolution/0.9"
 
 
 @expand_message_class
-class ResolveDid(DIDResolutionMessage):
+class ResolveDID(DIDResolutionMessage):
     """Class defining the structure of a resolve did message."""
     message_type = "resolve"
 
@@ -35,6 +36,7 @@ class ResolveDid(DIDResolutionMessage):
     # https://github.com/hyperledger/aries-rfcs/tree/master/features/0124-did-resolution-protocol#resolve-message
 
     class Fields:
+        """Fields of ResolveDID message."""
         sent_time = fields.Str(
             required=False,
             description="Time message was sent, ISO8601 with space date/time separator",
@@ -67,9 +69,8 @@ class ResolveDid(DIDResolutionMessage):
         self.sent_time = datetime_to_str(sent_time)
         self.did = did
 
-
     @staticmethod
-    def resolve_did(did, resolver_url):
+    async def resolve_did(did, resolver_url):
         """Resolve a DID using the uniresolver.
 
         resolver_url has to contain a {did} field.
@@ -77,11 +78,13 @@ class ResolveDid(DIDResolutionMessage):
         url = resolver_url.format(did=did)
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
-                if resp.status >= 200 and resp.status < 400:
+                if response.status >= 200 and response.status < 400:
                     content = response.json()
                     return content['didDocument']
-                raise HandlerException(f"Failed to resolve DID {did} using URL {url} with status {resp.status}")
-
+                raise HandlerException(
+                    f"Failed to resolve DID {did} using URL {url} with status "
+                    "{response.status}"
+                )
 
     async def handle(self, context: RequestContext, responder: BaseResponder):
         """Resolve a DID in response to a resolve message.
@@ -91,20 +94,20 @@ class ResolveDid(DIDResolutionMessage):
             responder: responder callback
         """
         LOGGER.debug("ResolveDidHandler called with context %s", context)
-        assert isinstance(context.message, ResolveDid)
+        assert isinstance(context.message, ResolveDID)
 
         LOGGER.info("Received resolve did: %s", context.message.did)
 
         resolver_url = context.settings.get("did_resolution_service")
         try:
-            did_document = self.resolve_did(context.message.did, resolver_url)
+            did_document = await self.resolve_did(context.message.did, resolver_url)
         except Exception as err:
             LOGGER.error(str(err))
             msg = (f"Could not resolve DID {context.message.did} using service"
                    f" {resolver_url}")
             raise HandlerException(msg)
         else:
-            reply_msg = ResolveDidResult(did_document=did_document)
+            reply_msg = ResolveDIDResult(did_document=did_document)
             reply_msg.assign_thread_from(context.message)
             if "l10n" in context.message._decorators:
                 reply_msg._decorators["l10n"] = context.message._decorators["l10n"]
@@ -112,11 +115,12 @@ class ResolveDid(DIDResolutionMessage):
 
 
 @expand_message_class
-class ResolveDidResult(DIDResolutionMessage):
+class ResolveDIDResult(DIDResolutionMessage):
     """Class defining the structure of a resolve did message."""
     message_type = "resolve_result"
 
     class Fields:
+        """Fields of ResolveDIDResult message."""
         sent_time = fields.Str(
             required=False,
             description="Time message was sent, ISO8601 with space date/time separator",
@@ -163,7 +167,7 @@ class ResolveDidResult(DIDResolutionMessage):
             responder: responder callback
         """
         LOGGER.debug("ResolveDidResultHandler called with context %s", context)
-        assert isinstance(context.message, ResolveDidResult)
+        assert isinstance(context.message, ResolveDIDResult)
 
         LOGGER.info("Received resolve did document")
         LOGGER.debug("did document: %s", context.message.did_document)
@@ -184,7 +188,7 @@ class ResolveDidResult(DIDResolutionMessage):
 MESSAGE_TYPES = DIDCommPrefix.qualify_all({
     msg_class.Meta.message_type: '{}.{}'.format(msg_class.__module__, msg_class.__name__)
     for msg_class in [
-        ResolveDid,
-        ResolveDidResult
+        ResolveDID,
+        ResolveDIDResult
     ]
 })
