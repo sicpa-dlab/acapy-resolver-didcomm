@@ -5,6 +5,8 @@ from aries_cloudagent.resolver.did_resolver_registry import DIDResolverRegistry
 
 from .didcomm_universal import DIDCommUniversalDIDResolver
 
+__all__ = ["DIDCommUniversalDIDResolver"]
+
 
 async def setup(context: InjectionContext):
     """Setup the plugin."""

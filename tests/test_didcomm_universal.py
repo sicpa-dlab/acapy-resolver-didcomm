@@ -7,8 +7,9 @@ from asynctest import mock as async_mock
 
 from aries_cloudagent.connections.models.diddoc_v2 import DIDDoc
 from aries_cloudagent.resolver.base import DIDNotFound, ResolverError
-from .. import didcomm_universal as test_module
-from ..didcomm_universal import DIDCommUniversalDIDResolver
+import didcomm_uniresolver.v0_9 as test_module
+from didcomm_uniresolver import DIDCommUniversalDIDResolver
+
 
 # pylint: disable=redefined-outer-name
 
@@ -71,6 +72,7 @@ class MockResponse:
     """Mock didcomm response."""
     pass
 
+
 class MockClientSession:
     """Mock client session."""
 
@@ -101,9 +103,11 @@ def mock_client_session():
 async def test_resolve(profile, resolver, mock_client_session):
     pass
 
+
 @pytest.mark.asyncio
 async def test_resolve_not_found(profile, resolver, mock_client_session):
     pass
+
 
 @pytest.mark.asyncio
 async def test_resolve_unexpeceted_status(profile, resolver, mock_client_session):
