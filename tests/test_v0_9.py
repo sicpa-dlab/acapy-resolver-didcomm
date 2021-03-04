@@ -6,6 +6,8 @@ from asynctest import mock
 from didcomm_uniresolver.v0_9 import ResolveDID, ResolveDIDResult
 from aries_cloudagent.messaging.request_context import RequestContext
 from aries_cloudagent.messaging.responder import MockResponder
+from aries_cloudagent.messaging.base_handler import HandlerException
+from . import DOC
 
 
 @pytest.fixture
@@ -13,10 +15,15 @@ def responder():
     yield MockResponder()
 
 
+# TODO: diagnose acapy lack of support for 'locales' array in ~l10n.
 @pytest.fixture
 def message():
-    yield ResolveDID(did="did:example:123abc")
+    yield ResolveDID(did="did:example:123abc",localization={ "locale": "en" })
 
+
+@pytest.fixture
+def resolved_did():
+    yield ResolveDID(did_document=DOC,localization={ "locale": "en" })
 
 @pytest.fixture
 def context(message):
@@ -38,6 +45,29 @@ def mock_resolve_did():
         yield resolve_did
 
 
+@mock.patch("aiohttp.ClientSession.get")
+@pytest.mark.asyncio
+async def test_resolve_did(mock_get, message):
+    mock_get.return_value.__aenter__.return_value.status = 200
+    mock_get.return_value.__aenter__.return_value.json = mock.CoroutineMock(return_value={"didDocument":DOC})
+    doc = await message.resolve_did(
+        "did:example:1234abcd",
+        "https://dev.uniresolver.io/1.0/identifiers/{did}"
+    )
+    assert doc == DOC
+
+
+@mock.patch("aiohttp.ClientSession.get")
+@pytest.mark.asyncio
+async def test_resolve_did_error(mock_get, message):
+    mock_get.return_value.__aenter__.return_value.status = 400
+    with pytest.raises(HandlerException):
+        await message.resolve_did(
+            "did:example:1234abcd",
+            "https://dev.uniresolver.io/1.0/identifiers/{did}"
+        )
+
+
 @pytest.mark.asyncio
 async def test_handle_resolve_did(context, responder, message, mock_resolve_did):
     """Test resolve did handler."""
@@ -46,3 +76,14 @@ async def test_handle_resolve_did(context, responder, message, mock_resolve_did)
     (result, _), *_ = responder.messages
     assert isinstance(result, ResolveDIDResult)
     assert result.did_document == {"id": "did:example:123"}
+
+
+@pytest.mark.asyncio
+async def test_handle_error(context, responder, message, mock_resolve_did):
+    """Test resolve did handler."""
+    mock_resolve_did.resolve_did = mock.CoroutineMock(side_effect=HandlerException())
+    with pytest.raises(HandlerException), mock.patch.object(
+        ResolveDID,
+        "resolve_did",
+        mock.CoroutineMock(side_effect=HandlerException())):
+        await message.handle(context, responder)

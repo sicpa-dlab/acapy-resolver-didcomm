@@ -96,15 +96,30 @@ class MockClientSession:
         return self.response
 
 
-FAKE_YAML = "endpoint: magic\r"
-"method: test"
+FAKE_YAML0 = "endpoint: magic\rmethods: test"
+@async_mock.patch("builtins.open", new_callable=async_mock.mock_open, read_data=FAKE_YAML0)
 @pytest.mark.asyncio
-async def test_setup(resolver):
-    async_mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "fake_config"})
-    with async_mock.patch("__main__.open", async_mock.mock_open(read_data=FAKE_YAML)):
+async def test_setup(mock_open,resolver):
+    with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "fake_config"}):
         await resolver.setup()
         assert resolver._endpoint == "magic"
         assert resolver._supported_methods == "test"
+
+
+@pytest.mark.asyncio
+async def test_setup_env_error(resolver):
+    with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_fake": "bad_env_config"}):
+        with pytest.raises(ResolverError):
+            await resolver.setup()
+
+
+FAKE_YAML1 = "NO_endpoint: magic\rNo_methodZ: test"
+@async_mock.patch("builtins.open", new_callable=async_mock.mock_open, read_data=FAKE_YAML1)
+@pytest.mark.asyncio
+async def test_setup_yaml_error(mock_open,resolver):
+    with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "fake_config"}):
+        with pytest.raises(ResolverError):
+            await resolver.setup()
 
 
 def test_supported_methods(resolver):

@@ -12,5 +12,5 @@ async def setup(context: InjectionContext):
     """Setup the plugin."""
     registry = context.inject(DIDResolverRegistry)
     resolver = DIDCommUniversalDIDResolver()
-    await resolver.setup(context)
+    await resolver.setup()
     registry.register(resolver)

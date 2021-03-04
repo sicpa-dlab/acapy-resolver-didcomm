@@ -55,7 +55,7 @@ class ResolveDID(DIDResolutionMessage):
         *,
         sent_time: Union[str, datetime] = None,
         did: str = None,
-        localization: str = None,
+        localization: dict = None,
         **kwargs,
     ):
         """
@@ -84,7 +84,7 @@ class ResolveDID(DIDResolutionMessage):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status >= 200 and response.status < 400:
-                    content = response.json()
+                    content = await response.json()
                     return content['didDocument']
                 raise HandlerException(
                     f"Failed to resolve DID {did} using URL {url} with status "
