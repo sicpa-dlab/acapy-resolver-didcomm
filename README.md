@@ -18,3 +18,8 @@ parameters.
 ```sh
 $ aca-py start --arg-file my_config.yml --plugin didcomm_uniresolver
 ```
+## Running Tests for development
+
+```sh
+pytest --cov-report term-missing --cov
+```

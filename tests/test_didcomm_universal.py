@@ -2,6 +2,8 @@
 
 from typing import Dict, Union
 
+import os
+from typing import Sequence
 import pytest
 from asynctest import mock as async_mock
 
@@ -94,21 +96,21 @@ class MockClientSession:
         return self.response
 
 
-@pytest.fixture
-def mock_client_session():
-    pass
-
-
+FAKE_YAML = "endpoint: magic\r"
+"method: test"
 @pytest.mark.asyncio
-async def test_resolve(profile, resolver, mock_client_session):
-    pass
+async def test_setup(resolver):
+    async_mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "fake_config"})
+    with async_mock.patch("__main__.open", async_mock.mock_open(read_data=FAKE_YAML)):
+        await resolver.setup()
+        assert resolver._endpoint == "magic"
+        assert resolver._supported_methods == "test"
 
 
-@pytest.mark.asyncio
-async def test_resolve_not_found(profile, resolver, mock_client_session):
-    pass
+def test_supported_methods(resolver):
+    assert resolver.supported_methods
 
 
-@pytest.mark.asyncio
-async def test_resolve_unexpeceted_status(profile, resolver, mock_client_session):
-    pass
+def test_configre_error(resolver):
+    with pytest.raises(ResolverError):
+        resolver.configure({"fake":"configure"})

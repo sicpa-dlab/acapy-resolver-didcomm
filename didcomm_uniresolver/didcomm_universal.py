@@ -23,7 +23,7 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
         self._endpoint = None
         self._supported_methods = None
 
-    async def setup(self, _context: InjectionContext):
+    async def setup(self):
         """Preform setup, populate supported method list, configuration."""
         config_file = os.environ.get(
             "UNI_RESOLVER_CONFIG",

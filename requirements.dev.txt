@@ -1,4 +1,5 @@
 pytest
 pytest-asyncio
+pytest-cov
 asynctest==0.13.0
 aries-cloudagent@git+https://github.com/rd-dlab/aries-cloudagent-python@feature/did-resolver
