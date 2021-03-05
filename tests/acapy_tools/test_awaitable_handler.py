@@ -64,3 +64,14 @@ async def test_can_await(
     await ExampleHandler().handle(context, mock_responder)
     assert pending_message.done()
     assert await pending_message == response_message
+
+
+@pytest.mark.asyncio
+async def test_can_awaitable_error_handler(
+    context, mock_responder, request_message, response_message
+):
+    """ Test awaitable error handler."""
+    context.message = response_message
+    ExampleErrorHandler.response_to(request_message)
+    with pytest.raises(Exception):
+        await ExampleErrorHandler().handle(context, mock_responder)

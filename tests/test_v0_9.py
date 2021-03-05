@@ -23,7 +23,8 @@ def message():
 
 @pytest.fixture
 def resolved_did():
-    yield ResolveDID(did_document=DOC,localization={ "locale": "en" })
+    yield ResolveDIDResult(did_document=DOC,localization={ "locale": "en" })
+
 
 @pytest.fixture
 def context(message):
@@ -56,6 +57,17 @@ async def test_resolve_did(mock_get, message):
     )
     assert doc == DOC
 
+
+@pytest.mark.asyncio
+async def test_resolve_did_response(resolved_did):
+    assert isinstance(resolved_did, ResolveDIDResult)
+
+
+@pytest.mark.asyncio
+async def test_handler_do_handle(resolved_did,context,responder):
+    handler = resolved_did.Handler()
+    assert handler.do_handle(context,responder)
+    #TODO: actually test something
 
 @mock.patch("aiohttp.ClientSession.get")
 @pytest.mark.asyncio

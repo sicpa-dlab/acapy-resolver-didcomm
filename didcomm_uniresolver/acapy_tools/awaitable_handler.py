@@ -33,6 +33,7 @@ class AwaitableHandler(BaseHandler):
         if context.message._thread_id in self.pending_futures:
             future = self.pending_futures[context.message._thread_id]
             future.set_result(context.message)
+            future.result()
 
     @abstractmethod
     async def do_handle(self, context: RequestContext, responder: BaseResponder):
@@ -48,7 +49,8 @@ class AwaitableErrorHandler(AwaitableHandler):
         if context.message._thread_id in self.pending_futures:
             future = self.pending_futures[context.message._thread_id]
             future.set_exception(self.map_exception(context.message))
-
+            future.result()
+    
     @abstractmethod
     def map_exception(self, message: AgentMessage):
         """Map a message to an exception that should be raised."""

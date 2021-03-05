@@ -141,7 +141,7 @@ class ResolveDIDResult(DIDResolutionMessage):
         *,
         sent_time: Union[str, datetime] = None,
         did_document: dict = None,
-        localization: str = None,
+        localization: dict = None,
         **kwargs,
     ):
         """
