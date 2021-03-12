@@ -8,7 +8,7 @@ from aries_cloudagent.messaging.models.base import BaseModel, BaseModelSchema
 from marshmallow import fields
 
 from didcomm_uniresolver.acapy_tools import (
-    PassHandler, expand_message_class, expand_model_class
+    expand_message_class, expand_model_class
 )
 
 
@@ -66,18 +66,6 @@ def test_expand_message_class_x_missing_message_type():
 
             class Fields:
                 test = fields.Str(required=True)
-
-
-def test_expand_message_class_missing_handler_uses_pass():
-    """Test that missing handler raises error."""
-    @expand_message_class
-    class TestMessage(AgentMessage):
-        message_type = "test_type"
-
-        class Fields:
-            test = fields.Str(required=True)
-
-    assert TestMessage.Handler == PassHandler
 
 
 def test_expand_message_class_x_missing_fields():

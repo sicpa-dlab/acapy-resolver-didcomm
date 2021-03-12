@@ -11,6 +11,7 @@ from aries_cloudagent.connections.models.diddoc_v2 import DIDDoc
 from aries_cloudagent.resolver.base import DIDNotFound, ResolverError
 import didcomm_uniresolver.v0_9 as test_module
 from didcomm_uniresolver import DIDCommUniversalDIDResolver
+from aries_cloudagent.messaging.request_context import RequestContext
 
 
 # pylint: disable=redefined-outer-name
@@ -96,30 +97,35 @@ class MockClientSession:
         return self.response
 
 
+@pytest.fixture
+def context():
+    yield RequestContext.test_context()
+
+
 FAKE_YAML0 = "endpoint: magic\rmethods: test"
 @async_mock.patch("builtins.open", new_callable=async_mock.mock_open, read_data=FAKE_YAML0)
 @pytest.mark.asyncio
-async def test_setup(mock_open,resolver):
+async def test_setup(mock_open,resolver,context):
     with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "fake_config"}):
-        await resolver.setup()
+        await resolver.setup(context)
         assert resolver._endpoint == "magic"
         assert resolver._supported_methods == "test"
 
 
 @pytest.mark.asyncio
-async def test_setup_env_error(resolver):
+async def test_setup_env_error(resolver,context):
     with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_fake": "bad_env_config"}):
         with pytest.raises(ResolverError):
-            await resolver.setup()
+            await resolver.setup(context)
 
 
 FAKE_YAML1 = "NO_endpoint: magic\rNo_methodZ: test"
 @async_mock.patch("builtins.open", new_callable=async_mock.mock_open, read_data=FAKE_YAML1)
 @pytest.mark.asyncio
-async def test_setup_yaml_error(mock_open,resolver):
+async def test_setup_yaml_error(mock_open,resolver,context):
     with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "fake_config"}):
         with pytest.raises(ResolverError):
-            await resolver.setup()
+            await resolver.setup(context)
 
 
 def test_supported_methods(resolver):

@@ -6,7 +6,7 @@ import pytest
 
 from asynctest import mock
 from didcomm_uniresolver.acapy_tools.awaitable_handler import (
-    AwaitableErrorHandler, AwaitableHandler
+    AwaitableHandler, AwaitableErrorHandler
 )
 from aries_cloudagent.messaging.request_context import RequestContext
 from aries_cloudagent.messaging.responder import BaseResponder, MockResponder
