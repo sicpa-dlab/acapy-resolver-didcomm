@@ -1,17 +1,22 @@
-"""HTTP Universal DID Resolver."""
+"""Didcommm Universal DID Resolver."""
 
 import os
 from pathlib import Path
 from typing import Sequence
 
 import yaml
+from asyncio import Future
 from aries_cloudagent.config.injection_context import InjectionContext
 from aries_cloudagent.connections.models.diddoc_v2 import DIDDoc
+from aries_cloudagent.connections.models.conn_record import ConnRecord
 from aries_cloudagent.core.profile import Profile
 from aries_cloudagent.resolver.base import (
     BaseDIDResolver, ResolverError, ResolverType
 )
+from aries_cloudagent.messaging.responder import BaseResponder
+from aries_cloudagent.storage.base import BaseStorage
 from aries_cloudagent.resolver.did import DID
+from didcomm_uniresolver.v0_9 import ResolveDID, ResolveDIDResult
 
 
 class DIDCommUniversalDIDResolver(BaseDIDResolver):
@@ -23,7 +28,7 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
         self._endpoint = None
         self._supported_methods = None
 
-    async def setup(self):
+    async def setup(self, context: InjectionContext):
         """Preform setup, populate supported method list, configuration."""
         config_file = os.environ.get(
             "UNI_RESOLVER_CONFIG",
@@ -62,3 +67,20 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
 
     async def _resolve(self, _profile: Profile, did: DID) -> DIDDoc:
         """Resolve DID through remote universal resolver."""
+        # Look up resolver connection using meta data on connection
+        storage = _profile.inject(BaseStorage)
+        meta_data_records = await storage.find_all_records(
+            ConnRecord.RECORD_TYPE_METADATA, {"key":"didcomm_uniresolver"}
+        )
+        conn_id = meta_data_records[0] #Todo: do this better.
+        # Construct Resolve DID message
+        resolved_did_message = ResolveDID(did=did)
+        # Get handle to response
+        response_handle: Future = ResolveDIDResult.Handler.response_to(resolved_did_message)
+        # Send message to the resolver connection
+        responder = _profile.inject(BaseResponder, required=False)
+        await responder.send(
+            response_handle, connection_id=conn_id
+        )
+        response = await response_handle
+        return response
