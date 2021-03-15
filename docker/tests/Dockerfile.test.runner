@@ -1,8 +1,9 @@
-FROM python:3.8-slim-buster
+FROM python:3.6-alpine
 
-WORKDIR /home
+WORKDIR /usr/src/app/
 
-COPY test-runner-requirements.txt requirements.txt
+COPY test_didcomm_uniresolver.py test_didcomm_uniresolver.py
+COPY requirements.txt requirements.txt
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Add docker-compose-wait tool -------------------
@@ -10,5 +11,5 @@ ENV WAIT_VERSION 2.7.2
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/$WAIT_VERSION/wait /wait
 RUN chmod +x /wait
 
-RUN ["pytest", "-v", "--junitxml=reports/result.xml"]
+CMD ["/wait", "&&", "pytest", "-v"]
 # CMD tail -f /dev/null --------------- use this to keep container running to copy reports

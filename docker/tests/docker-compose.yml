@@ -1,6 +1,6 @@
 version: '3'
 #***************************************************************
-# intigration level test agents                                *
+# integration level test agents                                *
 #***************************************************************
 
 services:
@@ -11,16 +11,11 @@ services:
   #*************************************************************
 
   resolver:
+    image: didcomm-resolver-testing
     build:
-      context: resolver
-      dockerfile: Dockerfile
-    volumes:
-      - ./resolver/startup.sh:/home/
-    #command: >
-    #  sh -c "./home/startup.sh"
-    ports:
-    - "3001:3001"
-    - "3002:3002"
+      context: ../..
+      dockerfile: docker/Dockerfile
+    command: start --arg-file default.yml --plugin didcomm_uniresolver
 
   #*************************************************************
   # Requester: requests did resolution from resolver using     *
@@ -28,16 +23,8 @@ services:
   #*************************************************************
 
   requester:
-    build:
-      context: requester
-      dockerfile: ../Dockerfile
-    volumes:
-      - ./requester/startup.sh:/home/
-    #command: >
-    #  sh -c "./home/startup.sh"
-    ports:
-    - "3003:3003"
-    - "3004:3004"
+    image: didcomm-resolver-testing
+    command: start --arg-file default.yml --plugin didcomm_uniresolver
 
   #*************************************************************
   # tester: drives tests for didcomm_uniresolver in a          *
@@ -49,16 +36,15 @@ services:
       build:
         context: .
         dockerfile: Dockerfile.test.runner
-      volumes:
-        - ./test_didcomm_uniresolver.py:/home/test_didcomm_uniresolver.py
-        - ./requirements.txt:/home/requirements.txt
+        #volumes:
+          #- ./test_didcomm_uniresolver.py:/usr/src/app/test_didcomm_uniresolver.py
+          #- ./requirements.txt:/usr/src/app/requirements.txt
       environment:
         - WAIT_BEFORE_HOSTS=3
-        - WAIT_HOSTS=requester:3003, requester:3004, resolver:3001, resolver:3002
+        - WAIT_HOSTS=requester:3000, resolver:3000
         - WAIT_HOSTS_TIMEOUT=300
         - WAIT_SLEEP_INTERVAL=1
         - WAIT_HOST_CONNECT_TIMEOUT=30
-      #command: sh -c "/wait && pytest"
       depends_on:
         - resolver
         - requester
