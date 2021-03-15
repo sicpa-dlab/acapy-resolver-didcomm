@@ -31,7 +31,7 @@ services:
   # "Juggernaut" fashion!                                      *
   #*************************************************************
 
-  tester:
+  tests:
       container_name: juggernaut
       build:
         context: .
@@ -48,3 +48,4 @@ services:
       depends_on:
         - resolver
         - requester
+      command: sh -c "/wait && pytest -v"

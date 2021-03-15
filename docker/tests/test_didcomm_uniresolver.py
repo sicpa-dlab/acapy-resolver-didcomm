@@ -24,4 +24,4 @@ async def agents_ready():
             await asyncio.sleep(1)'''
 
 def test_pass():
-    pass
+    print("nothing to look at here!")
