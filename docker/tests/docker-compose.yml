@@ -1,0 +1,64 @@
+version: '3'
+#***************************************************************
+# intigration level test agents                                *
+#***************************************************************
+
+services:
+  #*************************************************************
+  # Resolver: accepts didcomm did-resolve messages, makes http *
+  # calls to resolvers to resolve dids, and sends results to   *
+  # requesting agent using didcomm messages.                   *
+  #*************************************************************
+
+  resolver:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    volumes:
+      - ./resolver/startup.sh:/home/
+    #command: >
+    #  sh -c "./home/startup.sh"
+    ports:
+    - "3001:3001"
+    - "3002:3002"
+
+  #*************************************************************
+  # Requester: requests did resolution from resolver using     *
+  # didcomm messages.                                          *
+  #*************************************************************
+
+  requester:
+    build:
+      context: requester
+      dockerfile: ../Dockerfile
+    volumes:
+      - ./requester/startup.sh:/home/
+    #command: >
+    #  sh -c "./home/startup.sh"
+    ports:
+    - "3003:3003"
+    - "3004:3004"
+
+  #*************************************************************
+  # tester: drives tests for didcomm_uniresolver in a          *
+  # "Juggernaut" fashion!                                      *
+  #*************************************************************
+
+  tester:
+      container_name: juggernaut
+      build:
+        context: .
+        dockerfile: Dockerfile.test.runner
+      volumes:
+        - ./test_didcomm_uniresolver.py:/home/test_didcomm_uniresolver.py
+        - ./requirements.txt:/home/requirements.txt
+      environment:
+        - WAIT_BEFORE_HOSTS=3
+        - WAIT_HOSTS=requester:3003, requester:3004, resolver:3001, resolver:3002
+        - WAIT_HOSTS_TIMEOUT=300
+        - WAIT_SLEEP_INTERVAL=1
+        - WAIT_HOST_CONNECT_TIMEOUT=30
+      #command: sh -c "/wait && pytest"
+      depends_on:
+        - resolver
+        - requester
