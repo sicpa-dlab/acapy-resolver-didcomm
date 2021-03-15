@@ -1,7 +1,7 @@
-FROM bcgovimages/aries-cloudagent:py36-1.15-0_0.6.0rc0
+FROM bcgovimages/aries-cloudagent:py36-1.16-0_0.6.0
 
 USER root
-COPY ../didcomm_uniresolver aries-acapy-plugin-didcomm-uniresolver/didcomm_uniresolver
+COPY ./didcomm_uniresolver aries-acapy-plugin-didcomm-uniresolver/didcomm_uniresolver
 COPY ./requirements.txt aries-acapy-plugin-didcomm-uniresolver
 COPY ./README.md aries-acapy-plugin-didcomm-uniresolver
 COPY ./setup.py aries-acapy-plugin-didcomm-uniresolver
