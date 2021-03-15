@@ -12,7 +12,7 @@ services:
 
   resolver:
     build:
-      context: ..
+      context: resolver
       dockerfile: Dockerfile
     volumes:
       - ./resolver/startup.sh:/home/
