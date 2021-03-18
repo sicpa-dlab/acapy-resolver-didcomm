@@ -21,6 +21,7 @@ def establish_connection():
     if not r2.ok:
         pytest.fail(f"connections invitation creation failed!{r2.content}")
     conn_id = r2.json()["connection_id"]
+    time.sleep(3)
     yield conn_id
 
 
