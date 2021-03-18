@@ -65,22 +65,26 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
         """
         return self._supported_methods
 
-    async def _resolve(self, _profile: Profile, did: DID) -> DIDDoc:
+    async def _resolve(self, profile: Profile, did: DID) -> DIDDoc:
         """Resolve DID through remote universal resolver."""
         # Look up resolver connection using meta data on connection
-        storage = _profile.inject(BaseStorage)
-        meta_data_records = await storage.find_all_records(
-            ConnRecord.RECORD_TYPE_METADATA, {"key":"didcomm_uniresolver"}
-        )
-        conn_id = meta_data_records[0] #Todo: do this better.
-        # Construct Resolve DID message
-        resolved_did_message = ResolveDID(did=did)
-        # Get handle to response
-        response_handle: Future = ResolveDIDResult.Handler.response_to(resolved_did_message)
-        # Send message to the resolver connection
-        responder = _profile.inject(BaseResponder, required=False)
-        await responder.send(
-            response_handle, connection_id=conn_id
-        )
-        response = await response_handle
-        return response
+        async with profile.session() as session:
+            storage = session.inject(BaseStorage)
+            meta_data_records = await storage.find_all_records(
+                ConnRecord.RECORD_TYPE_METADATA, {"key":"didcomm_uniresolver"} # TODO: update name to be generalized
+            )
+            if meta_data_records:
+                conn_id = meta_data_records[0].tags["connection_id"]
+                # Construct Resolve DID message
+                resolved_did_message = ResolveDID(did=did)
+                # Get handle to response
+                response_handle: Future = ResolveDIDResult.Handler.response_to(resolved_did_message)
+                # Send message to the resolver connection
+                responder = session.inject(BaseResponder, required=False)
+                await responder.send(
+                    resolved_did_message, connection_id=conn_id
+                )
+                response = await response_handle
+                return response.did_document
+            else:
+                raise ResolverError("no connection configured for resolver!")

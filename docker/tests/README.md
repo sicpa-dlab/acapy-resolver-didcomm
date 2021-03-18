@@ -34,3 +34,56 @@ To save the output to a file you add the following to your logs command:
 `docker-compose logs -f -t >> myDockerCompose.log`
 
 - service logs directions taken from bruno-bieri at [stackoverflow](https://stackoverflow.com/a/40721348)
+
+## Sequence Diagram
+
+```plantuml
+actor Host as host
+entity Tests as tester
+entity Requester as requester
+entity Resolver as resolver
+
+host -> host: docker-compose up
+host -> resolver: ./startup.sh
+activate resolver
+host -> requester: ./startup.sh
+activate requester
+host -> tester: startup
+tester -> resolver: wait until started
+deactivate resolver
+tester -> requester: wait until started
+deactivate requester
+
+== Establish Connection ==
+
+tester -> resolver: create-invitation?metadata={didcomm_uniresolver:[bcovirn,..]}
+tester -> requester: receive-invitation
+alt webhooks
+alt keep it simple
+    resolver -> tester: POST /co
+else keep it simple
+    tester -> tester: sleep
+end
+tester -> requester: POST /connections/metadata/{resolver conn}
+ref over requester
+{
+    "didcomm-uniresolver": {
+        "resolver-connection": "<resolver conn>"
+    }
+}
+end ref
+
+== Test 1 ==
+
+tester -> requester: GET /resolver/resolve/{did}
+activate requester
+requester -> requester: await resolver.resolve(did)
+activate requester
+requester -> requester: prepare message
+requester -> resolver: resolve-did
+resolver -> requester: resolve-did-result
+deactivate requester
+requester -> tester: HTTP Response Body /resolver/resolve/{did}
+deactivate requester
+tester -> tester: check response
+```

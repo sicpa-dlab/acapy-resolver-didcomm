@@ -23,7 +23,7 @@ class AwaitableHandler(BaseHandler):
         The ID of the passed in message (the requesting message) is used as the
         correlator between pending future and response.
         """
-        future: Future = asyncio.get_running_loop().create_future()
+        future: Future = asyncio.get_event_loop().create_future()
         cls.pending_futures[request._message_id] = future
         return future
 

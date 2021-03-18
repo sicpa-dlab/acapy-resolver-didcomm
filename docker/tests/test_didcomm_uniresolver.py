@@ -1,27 +1,32 @@
 import pytest
+import requests
+import time
 
-'''HOSTS = [("resolver", 3201), ("requester", 3203)]
-MAX_RETRIES = 5
+TEST_DID = "did:key:z6Mkfriq1MqLBoPWecGoDLjguo1sB9brj6wT3qZ5BxkKpuP6"
+
 
 @pytest.fixture(scope="session", autouse=True)
-async def agents_ready():
-    """Wait for the agents to be ready."""
+def establish_connection():
+    r = requests.post(
+        "http://resolver:3001/connections/create-invitation",
+        params={"auto_accept": "true", "multi_use": "true"},
+    )
+    if not r.ok:
+        pytest.fail(f"connections invitation creation failed!{r.content}")
+    invite = r.json()["invitation"]
+    r2 = requests.post(
+        "http://requester:3001/connections/receive-invitation?auto_accept=true",
+        json=invite,
+    )
+    if not r2.ok:
+        pytest.fail(f"connections invitation creation failed!{r2.content}")
+    conn_id = r2.json()["connection_id"]
+    yield conn_id
 
-    def can_connect(host, port):
-        with closing(
-            socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        ) as sock:
-            return sock.connect_ex((host, port)) == 0
 
-    for host in HOSTS:
-        attempt = 0
-        while not can_connect(*host):
-            attempt += 1
-            if attempt > MAX_RETRIES:
-                raise RuntimeError(
-                    'Could not connect to server at {}:{}'.format(host, port)
-                )
-            await asyncio.sleep(1)'''
-
-def test_pass():
-    print("nothing to look at here!")
+def test_pass(establish_connection):
+    r = requests.get(f"http://requester:3001/resolver/resolve/{TEST_DID}")
+    if r.ok:
+        print(r.json())
+    else:
+        pytest.fail(f"resolver resolve failed!{r.content}")

@@ -3,10 +3,10 @@ Running ACA-Py with the didcomm-uniresolver Plugin
 
 ## Quickstart
 
-To build the container:
+To build the container, run from project root:
 
 ```sh
-$ docker build --tag acapy-didcomm-uniresolver .
+$ docker build -f docker/Dockerfile -t acapy-didcomm-uniresolver .
 ```
 
 To start an agent using the default configuration:

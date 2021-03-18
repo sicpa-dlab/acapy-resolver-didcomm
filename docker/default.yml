@@ -27,11 +27,6 @@ debug-presentations: true
 auto-accept-invites: true
 auto-accept-requests: true
 
-# Generate Admin Invitation
-connections-invite: true
-invite-label: ACA-Py (Admin)
-invite-metadata-json: '{"group": "admin"}'
-
 # Credentials and Presentations
 preserve-exchange-records: true
 auto-store-credential: true
