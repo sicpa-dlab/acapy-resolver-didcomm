@@ -17,7 +17,7 @@ services:
       dockerfile: docker/Dockerfile
     volumes:
       - ./didcomm_uniresolver:/usr/src/app/didcomm_uniresolver:z
-    command: start --arg-file default.yml --plugin didcomm_uniresolver
+    command: start --arg-file default.yml --plugin didcomm_uniresolver -e http://resolver:3000 
 
   #*************************************************************
   # Requester: requests did resolution from resolver using     *
@@ -28,7 +28,7 @@ services:
     image: didcomm-resolver-testing
     volumes:
       - ./didcomm_uniresolver:/usr/src/app/didcomm_uniresolver:z
-    command: start --arg-file default.yml --plugin didcomm_uniresolver
+    command: start --arg-file default.yml --plugin didcomm_uniresolver -e http://requester:3000 
 
   #*************************************************************
   # tester: drives tests for didcomm_uniresolver in a          *
