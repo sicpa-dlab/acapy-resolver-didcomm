@@ -10,7 +10,7 @@ RUN chown -R indy:indy aries-acapy-plugin-didcomm-uniresolver
 USER $user
 
 # Make ACA-Py Install location more accessible
-RUN ln -s /home/indy/.pyenv/versions/3.6.9/lib/python3.6/site-packages site-packages
+RUN ln -s /home/indy/.pyenv/versions/3.6.13/lib/python3.6/site-packages site-packages
 
 RUN pip3 install -e ./aries-acapy-plugin-didcomm-uniresolver
 

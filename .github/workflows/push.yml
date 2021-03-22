@@ -16,9 +16,6 @@ jobs:
         path: ~/.cache/pip
         # Look to see if there is a cache hit for the corresponding requirements file
         key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-          ${{ runner.os }}-
     - name: Install dependencies
       run: pip install -r requirements.txt
     - name: Lint with flake8
@@ -29,6 +26,7 @@ jobs:
       run: |
         pip install pytest
         pip install pytest-cov
-        pytest --cov=com --cov-report=xml --cov-report=html
-    - name: intigration tests
-      run: docker-compose run tests && docker-compose stop
+        pytest --cov=didcomm_uniresolver
+    - name: integration tests
+      run: |
+          docker-compose -f docker/tests/docker-compose.yml run tests && docker-compose -f docker/tests/docker-compose.yml stop
