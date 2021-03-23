@@ -87,27 +87,6 @@ def resolver():
     yield Agent(RESOLVER)
 
 
-def _resolver_invitation(auto_accept=AUTO_ACCEPT):
-    r = requests.post(
-        "http://resolver:3001/connections/create-invitation",
-        params={"auto_accept": auto_accept}
-    )
-    if not r.ok:
-        pytest.fail(f"connections invitation creation failed!{r.content}")
-    return r
-
-
-def _requester_receive_invite(invite,auto_accept=AUTO_ACCEPT):
-    r = requests.post(
-        "http://requester:3001/connections/receive-invitation",
-        params={"auto_accept": auto_accept},
-        json=invite,
-    )
-    if not r.ok:
-        pytest.fail(f"connections invitation receive failed!{r.content}")
-    return r
-
-
 def _requester_accept_invite(conn_id):
     r = requests.get(
         "http://requester:3001/connections/accept-invitation",
@@ -138,12 +117,19 @@ def test_conn_invitation(resolver):
 
 def test_conn_receive_accept_invite(resolver, requester):
     invite = resolver.create_invitation(auto_accept="false")["invitation"]
-    print(json.dumps(resolver.retrieve_connections(), indent=2))
-    received = requester.receive_invite(invite)
-    print(json.dumps(received, indent=2))
-    print(json.dumps(requester.retrieve_connections(), indent=2))
+    #print(json.dumps(resolver.retrieve_connections(), indent=2))
+    received = requester.receive_invite(invite,auto_accept="false")
+    #print(json.dumps(received, indent=2))
+    #print(json.dumps(requester.retrieve_connections(), indent=2))
     time.sleep(1)
     resp = requester.accept_invite(received["connection_id"])
+    # Todo: check created connectiion
+
+
+def test_auto_accept_conn(resolver, requester):
+    invite = resolver.create_invitation(auto_accept="true")["invitation"]
+    received = requester.receive_invite(invite,auto_accept="false")
+    print(received)
     # Todo: check created connectiion
 
 

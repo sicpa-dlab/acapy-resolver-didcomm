@@ -17,7 +17,7 @@ services:
       dockerfile: docker/Dockerfile
     volumes:
       - ../../didcomm_uniresolver:/home/indy/didcomm_uniresolver:z
-      #- ../../../cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z
+      - ../../../../aries-cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z
     command: start --arg-file default.yml --plugin didcomm_uniresolver -e http://resolver:3000
 
   #*************************************************************
@@ -29,7 +29,7 @@ services:
     image: didcomm-resolver-testing
     volumes:
       - ../../didcomm_uniresolver:/home/indy/didcomm_uniresolver:z
-      #- ../../../cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z
+      - ../../../../aries-cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z
     command: start --arg-file default.yml --plugin didcomm_uniresolver -e http://requester:3000
 
   #*************************************************************
