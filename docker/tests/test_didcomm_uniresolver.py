@@ -128,7 +128,7 @@ def test_conn_receive_accept_invite(resolver, requester):
 
 def test_auto_accept_conn(resolver, requester):
     invite = resolver.create_invitation(auto_accept="true")["invitation"]
-    received = requester.receive_invite(invite,auto_accept="false")
+    received = requester.receive_invite(invite,auto_accept="true")
     print(received)
     # Todo: check created connectiion
 

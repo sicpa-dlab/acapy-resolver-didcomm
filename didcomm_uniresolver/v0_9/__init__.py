@@ -1,6 +1,5 @@
 """DID Resolution Protocol v0.9 message and handler definitions."""
 
-import json
 import logging
 from datetime import datetime
 from typing import Union
@@ -18,6 +17,8 @@ from aries_cloudagent.protocols.problem_report.v1_0.message import (
 )
 from aries_cloudagent.resolver.base import DIDNotFound
 from marshmallow import fields
+from pydid import DIDDocument
+from typing import Union
 
 from ..acapy_tools import expand_message_class
 from ..acapy_tools.awaitable_handler import (
@@ -75,7 +76,7 @@ class ResolveDID(DIDResolutionMessage):
         self.did = did
 
     @staticmethod
-    async def resolve_did(did, resolver_url):
+    async def resolve_did(did, resolver_url)-> DIDDocument:
         """Resolve a DID using the uniresolver.
 
         resolver_url has to contain a {did} field.
@@ -163,7 +164,7 @@ class ResolveDIDResult(DIDResolutionMessage):
     class Handler(AwaitableHandler):
         """Provider for handle to await response."""
 
-        async def do_handle(self, context: RequestContext, responder: BaseResponder):
+        async def do_handle(self, context: RequestContext, responder: BaseResponder)->None:
             """
             Message handler logic a did resolve result.
 
@@ -177,7 +178,7 @@ class ResolveDIDResult(DIDResolutionMessage):
             LOGGER.info("Received resolve did document")
             LOGGER.debug("did document: %s", context.message.did_document)
 
-            did_document = json.loads(context.message.did_document)
+            did_document = DIDDocument.from_json(context.message.did_document)
 
             await responder.send_webhook(
                 "resolve_did_result",
@@ -199,7 +200,7 @@ class ResolveDIDProblemReport(DIDResolutionMessage, ProblemReport):
     class Handler(AwaitableErrorHandler):
         """Handler for DID resolution problem reports."""
 
-        async def do_handle(self, context: RequestContext, responder: BaseResponder):
+        async def do_handle(self, context: RequestContext, responder: BaseResponder)->None:
             """Handle problem reports."""
             report: ResolveDIDProblemReport = context.message
             LOGGER.warning("Received problem report: %s", report.explain_ltxt)

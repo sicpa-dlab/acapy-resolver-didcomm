@@ -7,7 +7,7 @@ from typing import Sequence
 import yaml
 from asyncio import Future
 from aries_cloudagent.config.injection_context import InjectionContext
-from aries_cloudagent.connections.models.diddoc_v2 import DIDDoc
+from pydid import DIDDocument, DID
 from aries_cloudagent.connections.models.conn_record import ConnRecord
 from aries_cloudagent.core.profile import Profile
 from aries_cloudagent.resolver.base import (
@@ -15,7 +15,6 @@ from aries_cloudagent.resolver.base import (
 )
 from aries_cloudagent.messaging.responder import BaseResponder
 from aries_cloudagent.storage.base import BaseStorage
-from aries_cloudagent.resolver.did import DID
 from didcomm_uniresolver.v0_9 import ResolveDID, ResolveDIDResult
 
 
@@ -25,8 +24,8 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
     def __init__(self):
         """Initialize DIDCommUniversalDIDResolver."""
         super().__init__(ResolverType.NON_NATIVE)
-        self._endpoint = None
-        self._supported_methods = None
+        self._endpoint:str = ''
+        self._supported_methods:Sequence[str] = ['']
 
     async def setup(self, context: InjectionContext):
         """Preform setup, populate supported method list, configuration."""
@@ -65,7 +64,7 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
         """
         return self._supported_methods
 
-    async def _resolve(self, profile: Profile, did: DID) -> DIDDoc:
+    async def _resolve(self, profile: Profile, did: DID) -> DIDDocument:
         """Resolve DID through remote universal resolver."""
         # Look up resolver connection using meta data on connection
         async with profile.session() as session:
