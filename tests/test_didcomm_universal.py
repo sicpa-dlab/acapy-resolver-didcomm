@@ -116,7 +116,7 @@ async def test_setup(mock_open, resolver, context):
 
 @pytest.mark.asyncio
 async def test_setup_env_error(resolver, context):
-    with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_fake": "bad_env_config"}):
+    with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "bad_env_config"}):
         with pytest.raises(ResolverError):
             await resolver.setup(context)
 
