@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "acapy-plugin-didcomm-uniresolver"
+name = "didcomm-uniresolver"
 version = "0.1.0"
 description = "DIDComm DID Resolution protocol handlers and Resolver interface"
 authors = ["Adam Burdett <burdettadam@gmail.com>", "Daniel Bluhm <dbluhm@pm.me>"]
