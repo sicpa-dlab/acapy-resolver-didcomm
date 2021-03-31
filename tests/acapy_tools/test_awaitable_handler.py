@@ -6,7 +6,8 @@ import pytest
 
 from asynctest import mock
 from didcomm_uniresolver.acapy_tools.awaitable_handler import (
-    AwaitableHandler, AwaitableErrorHandler
+    AwaitableHandler,
+    AwaitableErrorHandler,
 )
 from aries_cloudagent.messaging.request_context import RequestContext
 from aries_cloudagent.messaging.responder import BaseResponder, MockResponder
@@ -55,9 +56,7 @@ def mock_responder():
 
 
 @pytest.mark.asyncio
-async def test_can_await(
-    context, mock_responder, request_message, response_message
-):
+async def test_can_await(context, mock_responder, request_message, response_message):
     """Test awaitable handler can be awaited."""
     context.message = response_message
     pending_message: Future = ExampleHandler.response_to(request_message)

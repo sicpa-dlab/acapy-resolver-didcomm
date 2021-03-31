@@ -7,13 +7,16 @@ from typing import Union
 import aiohttp
 from aries_cloudagent.messaging.agent_message import AgentMessage
 from aries_cloudagent.messaging.base_handler import (
-    BaseResponder, HandlerException, RequestContext
+    BaseResponder,
+    HandlerException,
+    RequestContext,
 )
 from aries_cloudagent.messaging.util import datetime_now, datetime_to_str
 from aries_cloudagent.messaging.valid import INDY_ISO8601_DATETIME
 from aries_cloudagent.protocols.didcomm_prefix import DIDCommPrefix
 from aries_cloudagent.protocols.problem_report.v1_0.message import (
-    ProblemReport, ProblemReportSchema
+    ProblemReport,
+    ProblemReportSchema,
 )
 from aries_cloudagent.resolver.base import DIDNotFound
 from marshmallow import fields
@@ -21,21 +24,21 @@ from pydid import DIDDocument
 from typing import Union
 
 from ..acapy_tools import expand_message_class
-from ..acapy_tools.awaitable_handler import (
-    AwaitableErrorHandler, AwaitableHandler
-)
+from ..acapy_tools.awaitable_handler import AwaitableErrorHandler, AwaitableHandler
 
 LOGGER = logging.getLogger(__name__)
 
 
 class DIDResolutionMessage(AgentMessage):
     """Base Message class for messages used for resolution."""
+
     protocol = "https://didcomm.org/did_resolution/0.9"
 
 
 @expand_message_class
 class ResolveDID(DIDResolutionMessage):
     """Class defining the structure of a resolve did message."""
+
     message_type = "resolve"
 
     # TODO: add further response fields/options, see
@@ -43,13 +46,17 @@ class ResolveDID(DIDResolutionMessage):
 
     class Fields:
         """Fields of ResolveDID message."""
+
         sent_time = fields.Str(
             required=False,
             description="Time message was sent, ISO8601 with space date/time separator",
             **INDY_ISO8601_DATETIME,
         )
-        did = fields.Str(required=True, description="DID",
-                         example="did:sov:WRfXPg8dantKVubE3HX8pw",)
+        did = fields.Str(
+            required=True,
+            description="DID",
+            example="did:sov:WRfXPg8dantKVubE3HX8pw",
+        )
 
     def __init__(
         self,
@@ -76,7 +83,7 @@ class ResolveDID(DIDResolutionMessage):
         self.did = did
 
     @staticmethod
-    async def resolve_did(did, resolver_url)-> DIDDocument:
+    async def resolve_did(did, resolver_url) -> DIDDocument:
         """Resolve a DID using the uniresolver.
 
         resolver_url has to contain a {did} field.
@@ -86,7 +93,7 @@ class ResolveDID(DIDResolutionMessage):
             async with session.get(url) as response:
                 if response.status >= 200 and response.status < 400:
                     content = await response.json()
-                    return content['didDocument']
+                    return content["didDocument"]
                 raise HandlerException(
                     f"Failed to resolve DID {did} using URL {url} with status "
                     "{response.status}"
@@ -109,8 +116,10 @@ class ResolveDID(DIDResolutionMessage):
             did_document = await self.resolve_did(context.message.did, resolver_url)
         except Exception as err:
             LOGGER.error(str(err))
-            msg = (f"Could not resolve DID {context.message.did} using service"
-                   f" {resolver_url}")
+            msg = (
+                f"Could not resolve DID {context.message.did} using service"
+                f" {resolver_url}"
+            )
             raise HandlerException(msg)
         else:
             reply_msg = ResolveDIDResult(did_document=did_document)
@@ -123,10 +132,12 @@ class ResolveDID(DIDResolutionMessage):
 @expand_message_class
 class ResolveDIDResult(DIDResolutionMessage):
     """Class defining the structure of a resolve did message."""
+
     message_type = "resolve_result"
 
     class Fields:
         """Fields of ResolveDIDResult message."""
+
         sent_time = fields.Str(
             required=False,
             description="Time message was sent, ISO8601 with space date/time separator",
@@ -164,7 +175,9 @@ class ResolveDIDResult(DIDResolutionMessage):
     class Handler(AwaitableHandler):
         """Provider for handle to await response."""
 
-        async def do_handle(self, context: RequestContext, responder: BaseResponder)->None:
+        async def do_handle(
+            self, context: RequestContext, responder: BaseResponder
+        ) -> None:
             """
             Message handler logic a did resolve result.
 
@@ -200,7 +213,9 @@ class ResolveDIDProblemReport(DIDResolutionMessage, ProblemReport):
     class Handler(AwaitableErrorHandler):
         """Handler for DID resolution problem reports."""
 
-        async def do_handle(self, context: RequestContext, responder: BaseResponder)->None:
+        async def do_handle(
+            self, context: RequestContext, responder: BaseResponder
+        ) -> None:
             """Handle problem reports."""
             report: ResolveDIDProblemReport = context.message
             LOGGER.warning("Received problem report: %s", report.explain_ltxt)
@@ -212,10 +227,11 @@ class ResolveDIDProblemReport(DIDResolutionMessage, ProblemReport):
             )
 
 
-MESSAGE_TYPES = DIDCommPrefix.qualify_all({
-    msg_class.Meta.message_type: '{}.{}'.format(msg_class.__module__, msg_class.__name__)
-    for msg_class in [
-        ResolveDID,
-        ResolveDIDResult
-    ]
-})
+MESSAGE_TYPES = DIDCommPrefix.qualify_all(
+    {
+        msg_class.Meta.message_type: "{}.{}".format(
+            msg_class.__module__, msg_class.__name__
+        )
+        for msg_class in [ResolveDID, ResolveDIDResult]
+    }
+)

@@ -50,7 +50,7 @@ class AwaitableErrorHandler(AwaitableHandler):
             future = self.pending_futures[context.message._thread_id]
             future.set_exception(self.map_exception(context.message))
             future.result()
-    
+
     @abstractmethod
     def map_exception(self, message: AgentMessage):
         """Map a message to an exception that should be raised."""
