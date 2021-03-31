@@ -1,19 +1,16 @@
 """Test utilities."""
 
 import pytest
-from aries_cloudagent.messaging.agent_message import (
-    AgentMessage, AgentMessageSchema
-)
+from aries_cloudagent.messaging.agent_message import AgentMessage, AgentMessageSchema
 from aries_cloudagent.messaging.models.base import BaseModel, BaseModelSchema
 from marshmallow import fields
 
-from didcomm_uniresolver.acapy_tools import (
-    expand_message_class, expand_model_class
-)
+from didcomm_uniresolver.acapy_tools import expand_message_class, expand_model_class
 
 
 def test_expand_message_class():
     """Test that expand_message_class is correctly expanding."""
+
     @expand_message_class
     class TestMessage(AgentMessage):
         message_type = "test_type"
@@ -40,6 +37,7 @@ def test_expand_message_class():
 
 def test_expand_message_class_with_protocol():
     """Test protocol is prepended to message_type."""
+
     @expand_message_class
     class TestMessage(AgentMessage):
         protocol = "protocol"
@@ -60,6 +58,7 @@ def test_expand_message_class_with_protocol():
 def test_expand_message_class_x_missing_message_type():
     """Test that missing message type raises error."""
     with pytest.raises(ValueError):
+
         @expand_message_class
         class TestMessage(AgentMessage):
             handler = "handler"
@@ -71,6 +70,7 @@ def test_expand_message_class_x_missing_message_type():
 def test_expand_message_class_x_missing_fields():
     """Test that missing Fields and no schema raises error."""
     with pytest.raises(ValueError):
+
         @expand_message_class
         class TestMessage(AgentMessage):
             message_type = "test_type"
@@ -79,6 +79,7 @@ def test_expand_message_class_x_missing_fields():
 
 def test_expand_message_class_fields_from():
     """Test that expand message class can reuse another schema."""
+
     class OtherTestMessage(AgentMessage):
         def __init__(self, one: str = None, **kwargs):
             super().__init__(**kwargs)
@@ -100,9 +101,11 @@ def test_expand_message_class_fields_from():
 
 def test_expand_model_class():
     """Test that models are expanded as expected."""
+
     @expand_model_class
     class TestModel(BaseModel):
         """Test Model."""
+
         class Fields:
             test = fields.Str(required=True)
 
@@ -120,6 +123,7 @@ def test_expand_model_class():
 def test_expand_model_class_x_missing_fields():
     """Test that missing Fields and no schema raises error."""
     with pytest.raises(ValueError):
+
         @expand_model_class
         class TestModel(BaseModel):
             pass
@@ -127,6 +131,7 @@ def test_expand_model_class_x_missing_fields():
 
 def test_expand_model_class_fields_from():
     """Test that expand model class can reuse another schema."""
+
     class OtherTestModel(BaseModel):
         def __init__(self, one: str = None, **kwargs):
             super().__init__(**kwargs)

@@ -10,9 +10,7 @@ from aries_cloudagent.config.injection_context import InjectionContext
 from pydid import DIDDocument, DID
 from aries_cloudagent.connections.models.conn_record import ConnRecord
 from aries_cloudagent.core.profile import Profile
-from aries_cloudagent.resolver.base import (
-    BaseDIDResolver, ResolverError, ResolverType
-)
+from aries_cloudagent.resolver.base import BaseDIDResolver, ResolverError, ResolverType
 from aries_cloudagent.messaging.responder import BaseResponder
 from aries_cloudagent.storage.base import BaseStorage
 from didcomm_uniresolver.v0_9 import ResolveDID, ResolveDIDResult
@@ -24,14 +22,13 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
     def __init__(self):
         """Initialize DIDCommUniversalDIDResolver."""
         super().__init__(ResolverType.NON_NATIVE)
-        self._endpoint:str = ''
-        self._supported_methods:Sequence[str] = ['']
+        self._endpoint: str = ""
+        self._supported_methods: Sequence[str] = [""]
 
     async def setup(self, context: InjectionContext):
         """Preform setup, populate supported method list, configuration."""
         config_file = os.environ.get(
-            "UNI_RESOLVER_CONFIG",
-            Path(__file__).parent / "default_config.yml"
+            "UNI_RESOLVER_CONFIG", Path(__file__).parent / "default_config.yml"
         )
         try:
             with open(config_file) as input_yaml:
@@ -70,19 +67,20 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
         async with profile.session() as session:
             storage = session.inject(BaseStorage)
             meta_data_records = await storage.find_all_records(
-                ConnRecord.RECORD_TYPE_METADATA, {"key":"didcomm_uniresolver"} # TODO: update name to be generalized
+                ConnRecord.RECORD_TYPE_METADATA,
+                {"key": "didcomm_uniresolver"},  # TODO: update name to be generalized
             )
             if meta_data_records:
                 conn_id = meta_data_records[0].tags["connection_id"]
                 # Construct Resolve DID message
                 resolved_did_message = ResolveDID(did=did)
                 # Get handle to response
-                response_handle: Future = ResolveDIDResult.Handler.response_to(resolved_did_message)
+                response_handle: Future = ResolveDIDResult.Handler.response_to(
+                    resolved_did_message
+                )
                 # Send message to the resolver connection
                 responder = session.inject(BaseResponder, required=False)
-                await responder.send(
-                    resolved_did_message, connection_id=conn_id
-                )
+                await responder.send(resolved_did_message, connection_id=conn_id)
                 response = await response_handle
                 return response.did_document
             else:

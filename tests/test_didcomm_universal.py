@@ -1,14 +1,11 @@
 """Test universal resolver with did-comm messaging."""
 
-from typing import Dict, Union
 
 import os
-from typing import Sequence
 import pytest
 from asynctest import mock as async_mock
 
-from aries_cloudagent.connections.models.diddoc_v2 import DIDDoc
-from aries_cloudagent.resolver.base import DIDNotFound, ResolverError
+from aries_cloudagent.resolver.base import ResolverError
 import didcomm_uniresolver.v0_9 as test_module
 from didcomm_uniresolver import DIDCommUniversalDIDResolver
 from aries_cloudagent.messaging.request_context import RequestContext
@@ -73,6 +70,7 @@ def profile():
 
 class MockResponse:
     """Mock didcomm response."""
+
     pass
 
 
@@ -103,9 +101,13 @@ def context():
 
 
 FAKE_YAML0 = "endpoint: magic\rmethods: test"
-@async_mock.patch("builtins.open", new_callable=async_mock.mock_open, read_data=FAKE_YAML0)
+
+
+@async_mock.patch(
+    "builtins.open", new_callable=async_mock.mock_open, read_data=FAKE_YAML0
+)
 @pytest.mark.asyncio
-async def test_setup(mock_open,resolver,context):
+async def test_setup(mock_open, resolver, context):
     with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "fake_config"}):
         await resolver.setup(context)
         assert resolver._endpoint == "magic"
@@ -113,16 +115,20 @@ async def test_setup(mock_open,resolver,context):
 
 
 @pytest.mark.asyncio
-async def test_setup_env_error(resolver,context):
+async def test_setup_env_error(resolver, context):
     with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_fake": "bad_env_config"}):
         with pytest.raises(ResolverError):
             await resolver.setup(context)
 
 
 FAKE_YAML1 = "NO_endpoint: magic\rNo_methodZ: test"
-@async_mock.patch("builtins.open", new_callable=async_mock.mock_open, read_data=FAKE_YAML1)
+
+
+@async_mock.patch(
+    "builtins.open", new_callable=async_mock.mock_open, read_data=FAKE_YAML1
+)
 @pytest.mark.asyncio
-async def test_setup_yaml_error(mock_open,resolver,context):
+async def test_setup_yaml_error(mock_open, resolver, context):
     with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "fake_config"}):
         with pytest.raises(ResolverError):
             await resolver.setup(context)
@@ -134,4 +140,4 @@ def test_supported_methods(resolver):
 
 def test_configre_error(resolver):
     with pytest.raises(ResolverError):
-        resolver.configure({"fake":"configure"})
+        resolver.configure({"fake": "configure"})
