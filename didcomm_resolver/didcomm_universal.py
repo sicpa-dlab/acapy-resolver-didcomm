@@ -69,7 +69,7 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
             storage = session.inject(BaseStorage)
             meta_data_records = await storage.find_all_records(
                 ConnRecord.RECORD_TYPE_METADATA,
-                {"key": "didcomm_uniresolver"},  # TODO: update name to be generalized
+                {"key": "didcomm_resolver"},  # TODO: update name to be generalized
             )
             if meta_data_records:
                 conn_id = meta_data_records[0].tags["connection_id"]

@@ -1,4 +1,4 @@
-label: Aries Cloud Agent + didcomm_uniresolver Plugin
+label: Aries Cloud Agent + didcomm_resolver Plugin
 
 # Admin
 admin: [0.0.0.0, 3001]
@@ -6,7 +6,7 @@ admin-insecure-mode: true
 
 # Load toolbox plugin
 plugin:
-  - didcomm_uniresolver
+  - didcomm_resolver
 
 # Transport
 inbound-transport:

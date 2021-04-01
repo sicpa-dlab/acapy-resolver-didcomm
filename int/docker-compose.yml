@@ -15,7 +15,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    command: start --arg-file default.yml --plugin didcomm_uniresolver -e http://resolver:3000
+    command: start --arg-file default.yml --plugin didcomm_resolver -e http://resolver:3000
 
   #*************************************************************
   # Requester: requests did resolution from resolver using     *
@@ -24,10 +24,10 @@ services:
 
   requester:
     image: didcomm-resolver-testing
-    command: start --arg-file default.yml --plugin didcomm_uniresolver -e http://requester:3000
+    command: start --arg-file default.yml --plugin didcomm_resolver -e http://requester:3000
 
   #*************************************************************
-  # tester: drives tests for didcomm_uniresolver in a          *
+  # tester: drives tests for didcomm_resolver in a             *
   # "Juggernaut" fashion!                                      *
   #*************************************************************
 

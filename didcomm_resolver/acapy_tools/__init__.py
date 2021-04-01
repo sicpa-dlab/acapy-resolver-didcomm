@@ -17,9 +17,8 @@ def expand_message_class(cls):
         )
     if not hasattr(cls, "Fields") and not hasattr(cls, "fields_from"):
         raise ValueError(
-            "Class {} must have nested class Fields or schema defining expected fields".format(
-                cls.__name__
-            )
+            "Class {} must have nested class Fields or schema "
+            "defining expected fields".format(cls.__name__)
         )
 
     cls.Meta = type(
@@ -76,9 +75,8 @@ def expand_model_class(cls):
     """Class decorator for removing boilerplate from BaseModels."""
     if not hasattr(cls, "Fields") and not hasattr(cls, "fields_from"):
         raise ValueError(
-            "Class {} must have nested class Fields or schema defining expected fields".format(
-                cls.__name__
-            )
+            "Class {} must have nested class Fields or schema "
+            "defining expected fields".format(cls.__name__)
         )
 
     if hasattr(cls, "Meta") and cls.Meta != BaseModel.Meta:

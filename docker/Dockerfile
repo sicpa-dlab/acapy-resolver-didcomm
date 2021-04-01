@@ -7,16 +7,16 @@ RUN poetry config virtualenvs.create false
 RUN ln -s $(pyenv prefix)/lib/python3.6/site-packages site-packages
 
 USER root
-COPY ./didcomm_uniresolver aries-acapy-plugin-didcomm-uniresolver/didcomm_uniresolver
-COPY ./README.md aries-acapy-plugin-didcomm-uniresolver
-COPY ./setup.py aries-acapy-plugin-didcomm-uniresolver
-COPY ./pyproject.toml aries-acapy-plugin-didcomm-uniresolver
-COPY ./poetry.lock aries-acapy-plugin-didcomm-uniresolver
+COPY ./didcomm_resolver aries-acapy-plugin-didcomm-resolver/didcomm_resolver
+COPY ./README.md aries-acapy-plugin-didcomm-resolver
+COPY ./setup.py aries-acapy-plugin-didcomm-resolver
+COPY ./pyproject.toml aries-acapy-plugin-didcomm-resolver
+COPY ./poetry.lock aries-acapy-plugin-didcomm-resolver
 COPY ./docker/default.yml .
-RUN chown -R indy:indy aries-acapy-plugin-didcomm-uniresolver
+RUN chown -R indy:indy aries-acapy-plugin-didcomm-resolver
 USER $user
 
-RUN cd aries-acapy-plugin-didcomm-uniresolver; poetry install --no-dev
+RUN cd aries-acapy-plugin-didcomm-resolver; poetry install --no-dev
 
 ENTRYPOINT ["/bin/bash", "-c", "aca-py \"$@\"", "--"]
 CMD ["start", "--arg-file", "default.yml"]

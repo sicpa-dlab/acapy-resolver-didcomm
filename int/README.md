@@ -96,7 +96,7 @@ deactivate requester
 
 == Establish Connection ==
 
-tester -> resolver: create-invitation?metadata={didcomm_uniresolver:[bcovirn,..]}
+tester -> resolver: create-invitation?metadata={didcomm_resolver:[bcovirn,..]}
 tester -> requester: receive-invitation
 alt webhooks
 alt keep it simple
@@ -107,7 +107,7 @@ end
 tester -> requester: POST /connections/metadata/{resolver conn}
 ref over requester
 {
-    "didcomm-uniresolver": {
+    "didcomm-resolver": {
         "resolver-connection": "<resolver conn>"
     }
 }

@@ -5,7 +5,7 @@ from asyncio import Future
 import pytest
 
 from asynctest import mock
-from didcomm_uniresolver.acapy_tools.awaitable_handler import (
+from didcomm_resolver.acapy_tools.awaitable_handler import (
     AwaitableHandler,
     AwaitableErrorHandler,
 )

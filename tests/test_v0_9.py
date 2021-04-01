@@ -6,7 +6,7 @@ from aries_cloudagent.messaging.request_context import RequestContext
 from aries_cloudagent.messaging.responder import MockResponder
 from asynctest import mock
 
-from didcomm_uniresolver.protocol.v0_9 import ResolveDID, ResolveDIDResult
+from didcomm_resolver.protocol.v0_9 import ResolveDID, ResolveDIDResult
 
 from . import DOC
 
@@ -31,7 +31,7 @@ def resolved_did():
 def context(message):
     con = RequestContext.test_context()
     con.message = message
-    con.update_settings({"didcomm_uniresolver.endpoint": "http://example.com"})
+    con.update_settings({"didcomm_resolver.endpoint": "http://example.com"})
     yield con
 
 

@@ -2,7 +2,7 @@ FROM python:3.6-alpine
 
 WORKDIR /usr/src/app/
 
-COPY test_didcomm_uniresolver.py test_didcomm_uniresolver.py
+COPY test_didcomm_resolver.py test_didcomm_resolver.py
 COPY requirements.txt requirements.txt
 RUN pip3 install --no-cache-dir -r requirements.txt
 

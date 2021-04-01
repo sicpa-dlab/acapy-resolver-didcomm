@@ -83,7 +83,7 @@ class ResolveDID(DIDResolutionMessage):
 
     @staticmethod
     async def resolve_did(did, resolver_url) -> DIDDocument:
-        """Resolve a DID using the uniresolver.
+        """Resolve a DID using the resolver.
 
         resolver_url has to contain a {did} field.
         """
@@ -110,7 +110,7 @@ class ResolveDID(DIDResolutionMessage):
 
         LOGGER.info("Received resolve did: %s", context.message.did)
 
-        resolver_url = context.settings.get("didcomm_uniresolver.endpoint")
+        resolver_url = context.settings.get("didcomm_resolver.endpoint")
         try:
             did_document = await self.resolve_did(context.message.did, resolver_url)
         except Exception as err:

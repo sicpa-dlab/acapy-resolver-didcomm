@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "didcomm-uniresolver"
+name = "didcomm-resolver"
 version = "0.1.0"
 description = "DIDComm DID Resolution protocol handlers and Resolver interface"
 authors = ["Adam Burdett <burdettadam@gmail.com>", "Daniel Bluhm <dbluhm@pm.me>"]
 license = "Apache-2.0"
 readme="README.md"
-repository="https://github.com/sicpa-dlab/aries-acapy-plugin-didcomm-uniresolver"
+repository="https://github.com/sicpa-dlab/aries-acapy-plugin-didcomm-resolver"
 
 [tool.poetry.dependencies]
 python = "^3.6.9"
@@ -27,4 +27,4 @@ requires = ["setuptools", "poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-addopts = "tests -p no:warnings --cov=didcomm_uniresolver"
+addopts = "tests -p no:warnings --cov=didcomm_resolver"

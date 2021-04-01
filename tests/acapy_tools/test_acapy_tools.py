@@ -5,7 +5,7 @@ from aries_cloudagent.messaging.agent_message import AgentMessage, AgentMessageS
 from aries_cloudagent.messaging.models.base import BaseModel, BaseModelSchema
 from marshmallow import fields
 
-from didcomm_uniresolver.acapy_tools import expand_message_class, expand_model_class
+from didcomm_resolver.acapy_tools import expand_message_class, expand_model_class
 
 
 def test_expand_message_class():
