@@ -22,7 +22,7 @@ jobs:
           pip install black==20.8b1
       - name: Black Format Check
         run: |
-          black --check didcomm_uniresolver
+          black --check didcomm_resolver
 
   test:
     name: Tests
