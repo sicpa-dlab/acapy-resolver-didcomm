@@ -2,13 +2,13 @@ version: '3'
 services:
   resolver:
     volumes:
-      - ../../didcomm_uniresolver:/home/indy/didcomm_uniresolver:z
-      - ../../../cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z
+      - ../didcomm_uniresolver:/home/indy/didcomm_uniresolver:z
+      - ../../cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z
 
   requester:
     volumes:
-      - ../../didcomm_uniresolver:/home/indy/didcomm_uniresolver:z
-      - ../../../cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z
+      - ../didcomm_uniresolver:/home/indy/didcomm_uniresolver:z
+      - ../../cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z
 
   tests:
     volumes:
