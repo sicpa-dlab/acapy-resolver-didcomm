@@ -21,7 +21,6 @@ from aries_cloudagent.protocols.problem_report.v1_0.message import (
 from aries_cloudagent.resolver.base import DIDNotFound
 from marshmallow import fields
 from pydid import DIDDocument
-from typing import Union
 
 from ..acapy_tools import expand_message_class
 from ..acapy_tools.awaitable_handler import AwaitableErrorHandler, AwaitableHandler

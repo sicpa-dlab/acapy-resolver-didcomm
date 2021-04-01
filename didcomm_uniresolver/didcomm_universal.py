@@ -1,19 +1,20 @@
 """Didcommm Universal DID Resolver."""
 
 import os
+from asyncio import Future
 from pathlib import Path
 from typing import Sequence
 
 import yaml
-from asyncio import Future
 from aries_cloudagent.config.injection_context import InjectionContext
-from pydid import DIDDocument, DID
 from aries_cloudagent.connections.models.conn_record import ConnRecord
 from aries_cloudagent.core.profile import Profile
-from aries_cloudagent.resolver.base import BaseDIDResolver, ResolverError, ResolverType
 from aries_cloudagent.messaging.responder import BaseResponder
+from aries_cloudagent.resolver.base import BaseDIDResolver, ResolverError, ResolverType
 from aries_cloudagent.storage.base import BaseStorage
-from didcomm_uniresolver.v0_9 import ResolveDID, ResolveDIDResult
+from pydid import DID, DIDDocument
+
+from .protocol.v0_9 import ResolveDID, ResolveDIDResult
 
 
 class DIDCommUniversalDIDResolver(BaseDIDResolver):

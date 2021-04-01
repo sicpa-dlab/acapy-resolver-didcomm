@@ -1,12 +1,13 @@
 """Test Protocol handlers of DID Resolution protocl v0.9."""
 
 import pytest
-
-from asynctest import mock
-from didcomm_uniresolver.v0_9 import ResolveDID, ResolveDIDResult
+from aries_cloudagent.messaging.base_handler import HandlerException
 from aries_cloudagent.messaging.request_context import RequestContext
 from aries_cloudagent.messaging.responder import MockResponder
-from aries_cloudagent.messaging.base_handler import HandlerException
+from asynctest import mock
+
+from didcomm_uniresolver.protocol.v0_9 import ResolveDID, ResolveDIDResult
+
 from . import DOC
 
 

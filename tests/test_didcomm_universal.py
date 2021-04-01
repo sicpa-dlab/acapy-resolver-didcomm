@@ -2,14 +2,14 @@
 
 
 import os
+
 import pytest
+from aries_cloudagent.messaging.request_context import RequestContext
+from aries_cloudagent.resolver.base import ResolverError
 from asynctest import mock as async_mock
 
-from aries_cloudagent.resolver.base import ResolverError
-import didcomm_uniresolver.v0_9 as test_module
+# import didcomm_uniresolver.protocol.v0_9 as test_module
 from didcomm_uniresolver import DIDCommUniversalDIDResolver
-from aries_cloudagent.messaging.request_context import RequestContext
-
 
 # pylint: disable=redefined-outer-name
 
