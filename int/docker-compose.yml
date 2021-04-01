@@ -13,11 +13,8 @@ services:
   resolver:
     image: didcomm-resolver-testing
     build:
-      context: ../..
+      context: ..
       dockerfile: docker/Dockerfile
-    #volumes:
-    #  - ../../didcomm_uniresolver:/home/indy/didcomm_uniresolver:z
-    #  - ../../../../aries-cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z
     command: start --arg-file default.yml --plugin didcomm_uniresolver -e http://resolver:3000
 
   #*************************************************************
@@ -27,9 +24,6 @@ services:
 
   requester:
     image: didcomm-resolver-testing
-    #volumes:
-    #  - ../../didcomm_uniresolver:/home/indy/didcomm_uniresolver:z
-    #  - ../../../../aries-cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z
     command: start --arg-file default.yml --plugin didcomm_uniresolver -e http://requester:3000
 
   #*************************************************************
@@ -51,6 +45,4 @@ services:
       depends_on:
         - resolver
         - requester
-      #volumes:
-      #  - ./test_didcomm_uniresolver.py:/usr/src/app/test_didcomm_uniresolver.py:z
       command: sh -c "/wait && pytest -v"

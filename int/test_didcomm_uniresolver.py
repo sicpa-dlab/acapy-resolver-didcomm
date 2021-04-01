@@ -6,7 +6,6 @@ import pytest
 import requests
 import time
 from functools import wraps
-import json
 
 TEST_DID = "did:key:z6Mkfriq1MqLBoPWecGoDLjguo1sB9brj6wT3qZ5BxkKpuP6"
 AUTO_ACCEPT = "false"
