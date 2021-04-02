@@ -1,31 +1,27 @@
-
-import json
+"""Routes for DIDComm Resolver."""
+# import json
 
 from aiohttp import web
 from aiohttp_apispec import (
     docs,
     match_info_schema,
-    querystring_schema,
     request_schema,
     response_schema,
 )
 
-from marshmallow import fields, validate, validates_schema
+from marshmallow import fields
+
+# , validate, validates_schema
 
 from aries_cloudagent.admin.request_context import AdminRequestContext
-from aries_cloudagent.connections.models.conn_record import ConnRecord, ConnRecordSchema
+from aries_cloudagent.connections.models.conn_record import ConnRecord
 from aries_cloudagent.messaging.models.base import BaseModelError
 from aries_cloudagent.messaging.models.openapi import OpenAPISchema
-from aries_cloudagent.messaging.valid import (
-    ENDPOINT,
-    INDY_DID,
-    INDY_RAW_PUBLIC_KEY,
-    UUIDFour,
-)
+from aries_cloudagent.messaging.valid import UUIDFour
 from aries_cloudagent.storage.error import StorageError, StorageNotFoundError
-from aries_cloudagent.wallet.error import WalletError
 from aries_cloudagent.resolver import DIDResolverRegistry
-from .didcomm_universal import DIDCommResolver
+from .resolver import DIDCommResolver
+
 DID_COMM_SPEC_URI = ""  # FIXME: PLS
 
 
@@ -56,8 +52,10 @@ class ConnectionListSchema(OpenAPISchema):
     """Result schema for connection metadata."""
 
     fields.List(
-        fields.Str(description="connection id"), description="List of connections registered as did resolvers."
+        fields.Str(description="connection id"),
+        description="List of connections registered as did resolvers.",
     )
+
 
 @docs(
     tags=["resolver"],
@@ -80,6 +78,7 @@ async def connections(request: web.BaseRequest):
     tag_filter = {}
     post_filter = {}
     session = await context.session()
+
     def connection_sort_key(conn):
         """Get the sorting key for a particular connection."""
 
@@ -92,6 +91,7 @@ async def connections(request: web.BaseRequest):
             pfx = "0"
 
         return pfx + conn["created_at"]
+
     try:
         # TODO: implement
         # search metadata records for resolvers
@@ -126,10 +126,10 @@ async def connection_register(request: web.BaseRequest):
         registry: DIDResolverRegistry = session.inject(DIDResolverRegistry)
         resolver = DIDCommResolver(supported_methods=methods)
         registry.register(resolver)
-    except Exception as err:
+    except StorageNotFoundError as err:
         raise web.HTTPBadRequest(reason=err.roll_up) from err
 
-    return web.json_response({connection_id:methods})
+    return web.json_response({connection_id: methods})
 
 
 async def register(app: web.Application):
@@ -138,12 +138,11 @@ async def register(app: web.Application):
     app.add_routes(
         [
             web.get("/resolver/connections", connections, allow_head=False),
-            web.get("/resolver/connections/{conn_id}", connection, allow_head=False),
+            # web.get("/resolver/connections/{conn_id}", connection, allow_head=False),
             web.post("/resolver/register/{conn_id}", connection_register),
-            web.delete("/resolver/connections/{conn_id}", connection_remove),
+            # web.delete("/resolver/connections/{conn_id}", connection_remove),
         ]
     )
-
 
 
 def post_process_routes(app: web.Application):
