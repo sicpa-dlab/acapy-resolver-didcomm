@@ -9,7 +9,7 @@ from aries_cloudagent.resolver.base import ResolverError
 from asynctest import mock as async_mock
 
 # import didcomm_resolver.protocol.v0_9 as test_module
-from didcomm_resolver import DIDCommUniversalDIDResolver
+from didcomm_resolver import DIDCommResolver
 
 # pylint: disable=redefined-outer-name
 
@@ -17,7 +17,7 @@ from didcomm_resolver import DIDCommUniversalDIDResolver
 @pytest.fixture
 def resolver():
     """Resolver fixture."""
-    uni_resolver = DIDCommUniversalDIDResolver()
+    uni_resolver = DIDCommResolver()
     uni_resolver.configure(
         {
             "endpoint": "https://dev.uniresolver.io/1.0/identifiers",

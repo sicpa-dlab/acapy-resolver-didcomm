@@ -16,41 +16,17 @@ from pydid import DID, DIDDocument
 
 from .protocol.v0_9 import ResolveDID, ResolveDIDResult
 
-
-class DIDCommUniversalDIDResolver(BaseDIDResolver):
+class DIDCommResolver(BaseDIDResolver):
     """Universal DID Resolver with DIDCOMM messages."""
-
-    def __init__(self):
-        """Initialize DIDCommUniversalDIDResolver."""
+    METADATA_KEY = "didcomm_resolver"
+    def __init__(self,conn_id: str, methods: Sequence[str]):
+        """Initialize DIDCommResolver."""
         super().__init__(ResolverType.NON_NATIVE)
-        self._endpoint: str = ""
-        self._supported_methods: Sequence[str] = [""]
+        self.connection_id = conn_id
+        self._supported_methods = methods
 
     async def setup(self, context: InjectionContext):
-        """Preform setup, populate supported method list, configuration."""
-        config_file = os.environ.get(
-            "UNI_RESOLVER_CONFIG", Path(__file__).parent / "default_config.yml"
-        )
-        try:
-            with open(config_file) as input_yaml:
-                configuration = yaml.load(input_yaml, Loader=yaml.SafeLoader)
-        except FileNotFoundError as err:
-            raise ResolverError(
-                f"Failed to load configuration file for {self.__class__.__name__}"
-            ) from err
-        assert isinstance(configuration, dict)
-        self.configure(configuration)
-
-    def configure(self, configuration: dict):
-        """Configure this instance of the resolver from configuration dict."""
-        try:
-            self._endpoint = configuration["endpoint"]
-            self._supported_methods = configuration["methods"]
-        except KeyError as err:
-            raise ResolverError(
-                f"Failed to configure {self.__class__.__name__}, "
-                "missing attribute in configuration: {err}"
-            ) from err
+        """empty, setup is done at registration of connection as resolver."""
 
     @property
     def supported_methods(self) -> Sequence[str]:
@@ -67,12 +43,16 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
         # Look up resolver connection using meta data on connection
         async with profile.session() as session:
             storage = session.inject(BaseStorage)
-            meta_data_records = await storage.find_all_records(
-                ConnRecord.RECORD_TYPE_METADATA,
-                {"key": "didcomm_resolver"},  # TODO: update name to be generalized
+            metadata = map(lambda record: record,
+                await storage.find_all_records(
+                    ConnRecord.RECORD_TYPE_METADATA, {'key': self.METADATA_KEY}
+                )
             )
-            if meta_data_records:
-                conn_id = meta_data_records[0].tags["connection_id"]
+            admins = [
+                await ConnRecord.retrieve_by_id(session, id)
+                for id in admin_ids
+            ]
+            for conn in records:
                 # Construct Resolve DID message
                 resolved_did_message = ResolveDID(did=did)
                 # Get handle to response
