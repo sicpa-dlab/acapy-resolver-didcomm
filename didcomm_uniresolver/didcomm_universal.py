@@ -64,13 +64,14 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
         """
         return self._supported_methods
 
-    async def _resolve(self, profile: Profile, did: DID) -> DIDDocument:
+    async def _resolve(self, profile: Profile, did: str) -> DIDDocument:
         """Resolve DID through remote universal resolver."""
         # Look up resolver connection using meta data on connection
         async with profile.session() as session:
             storage = session.inject(BaseStorage)
             meta_data_records = await storage.find_all_records(
-                ConnRecord.RECORD_TYPE_METADATA, {"key":"didcomm_uniresolver"} # TODO: update name to be generalized
+                ConnRecord.RECORD_TYPE_METADATA, {"key":"didcomm_uniresolver"}
+                # TODO: update name to be generalized
             )
             if meta_data_records:
                 conn_id = meta_data_records[0].tags["connection_id"]
@@ -84,6 +85,9 @@ class DIDCommUniversalDIDResolver(BaseDIDResolver):
                     resolved_did_message, connection_id=conn_id
                 )
                 response = await response_handle
-                return response.did_document
+                result = response.did_document
+                if not isinstance(result, dict):
+                    result = result.serialize()
+                return result
             else:
                 raise ResolverError("no connection configured for resolver!")
