@@ -110,15 +110,15 @@ FAKE_YAML0 = "endpoint: magic\rmethods: test"
 async def test_setup(mock_open, resolver, context):
     with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "fake_config"}):
         await resolver.setup(context)
-        assert resolver._endpoint == "magic"
         assert resolver._supported_methods == "test"
 
 
 @pytest.mark.asyncio
-async def test_setup_env_error(resolver, context):
-    with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "bad_env_config"}):
-        with pytest.raises(ResolverError):
-            await resolver.setup(context)
+@async_mock.patch('os.environ')
+async def test_setup_env_error(env_mock, resolver, context):
+    env_mock.get.return_value = "error"
+    with pytest.raises(ResolverError):
+        await resolver.setup(context)
 
 
 FAKE_YAML1 = "NO_endpoint: magic\rNo_methodZ: test"
