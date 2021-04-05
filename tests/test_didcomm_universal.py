@@ -1,7 +1,7 @@
 """Test universal resolver with did-comm messaging."""
 import json
 import os
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch, MagicMock
 
 import pytest
 from aries_cloudagent.messaging.request_context import RequestContext
@@ -16,6 +16,9 @@ from didcomm_resolver import DIDCommResolver
 # pylint: disable=redefined-outer-name
 from tests import DOC
 
+class AsyncMock(MagicMock):
+    async def __call__(self, *args, **kwargs):
+        return super(AsyncMock, self).__call__(*args, **kwargs)
 
 @pytest.fixture
 def resolver():

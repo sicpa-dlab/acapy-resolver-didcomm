@@ -115,11 +115,9 @@ class DIDCommResolver(BaseDIDResolver):
             records = await storage.find_all_records(
                 ConnRecord.RECORD_TYPE_METADATA, {"key": self.METADATA_KEY}
             )
-
             connection_ids = self._retrieve_connection_ids(records, method)
-
             responder = session.inject(BaseResponder)
-            assert responder
+
             for conn_id in connection_ids:
                 # Construct Resolve DID message
                 resolve_did_message = ResolveDID(did=did)
