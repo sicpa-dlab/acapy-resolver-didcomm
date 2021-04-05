@@ -1,4 +1,3 @@
-endpoint: "https://dev.uniresolver.io/1.0/identifiers"
 methods:
   - "sov"
   - "abt"

@@ -1,0 +1,15 @@
+version: '3'
+services:
+  resolver:
+    volumes:
+      - ../didcomm_resolver:/home/indy/didcomm_resolver:z
+      - ../../cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z
+
+  requester:
+    volumes:
+      - ../didcomm_resolver:/home/indy/didcomm_resolver:z
+      - ../../cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z
+
+  tests:
+    volumes:
+      - ./test_didcomm_resolver.py:/usr/src/app/test_didcomm_resolver.py:z

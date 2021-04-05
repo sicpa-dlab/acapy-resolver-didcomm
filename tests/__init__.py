@@ -51,6 +51,8 @@ DOC = {
         }
     ],
 }
+
+
 @pytest.fixture
 def mock_admin_connection():
     """Mock connection fixture."""
@@ -68,10 +70,12 @@ def mock_responder():
 @pytest.fixture
 def profile(event_bus, mock_responder):
     """Profile fixture."""
-    yield InMemoryProfile.test_profile(bind={
-        BaseResponder: mock_responder,
-        ProtocolRegistry: ProtocolRegistry(),
-    })
+    yield InMemoryProfile.test_profile(
+        bind={
+            BaseResponder: mock_responder,
+            ProtocolRegistry: ProtocolRegistry(),
+        }
+    )
 
 
 @pytest.fixture
@@ -86,14 +90,16 @@ def context(profile, mock_admin_connection):
 @pytest.fixture
 def mock_get_connection():
     """Mock get_connection on a module"""
+
     @contextmanager
     def _mock_get_connection(module, conn: ConnRecord = None):
         with mock.patch.object(
             module,
             "get_connection",
-            mock.CoroutineMock(return_value=conn or mock.MagicMock(spec=ConnRecord))
+            mock.CoroutineMock(return_value=conn or mock.MagicMock(spec=ConnRecord)),
         ) as get_connection:
             yield get_connection
+
     yield _mock_get_connection
 
 
@@ -115,10 +121,12 @@ def mock_send_to_admins():
 
     Benefit of making this a fixture is primarily for ease of use.
     """
+
     @contextmanager
     def _mock_send_to_admins(module):
         temp = module.send_to_admins
         module.send_to_admins = MockSendToAdmins()
         yield module.send_to_admins
         module.send_to_admins = temp
+
     yield _mock_send_to_admins

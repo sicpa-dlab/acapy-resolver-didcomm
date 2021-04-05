@@ -2,15 +2,12 @@
 
 from aries_cloudagent.config.injection_context import InjectionContext
 from aries_cloudagent.resolver.did_resolver_registry import DIDResolverRegistry
+from .resolver import DIDCommResolver
 
-from .didcomm_universal import DIDCommUniversalDIDResolver
-
-__all__ = ["DIDCommUniversalDIDResolver"]
+__all__ = ["DIDCommResolver"]
 
 
 async def setup(context: InjectionContext):
     """Setup the plugin."""
     registry = context.inject(DIDResolverRegistry)
-    resolver = DIDCommUniversalDIDResolver()
-    await resolver.setup(context)
-    registry.register(resolver)
+    registry.register(DIDCommResolver())

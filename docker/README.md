@@ -1,4 +1,4 @@
-Running ACA-Py with the didcomm-uniresolver Plugin
+Running ACA-Py with the didcomm-resolver Plugin
 ======================================
 
 ## Quickstart
@@ -6,26 +6,26 @@ Running ACA-Py with the didcomm-uniresolver Plugin
 To build the container, run from project root:
 
 ```sh
-$ docker build -f docker/Dockerfile -t acapy-didcomm-uniresolver .
+$ docker build -f docker/Dockerfile -t acapy-didcomm-resolver .
 ```
 
 To start an agent using the default configuration:
 
 ```sh
-$ docker run -it -p 3000:3000 -p 3001:3001 --rm acapy-didcomm-uniresolver
+$ docker run -it -p 3000:3000 -p 3001:3001 --rm acapy-didcomm-resolver
 ```
 
 For development purposes, it is often useful to use local versions of the code
 rather than rebuilding a new container with the changes.
 
 To start an agent using the default configuration and local versions of ACA-Py
-and/or the didcomm-uniresolver plugin (paths must be adapted to your environment):
+and/or the didcomm-resolver plugin (paths must be adapted to your environment):
 
 ```sh
 $ docker run -it -p 3000:3000 -p 3001:3001 --rm \
 	-v ../aries-cloudagent-python/aries_cloudagent:/home/indy/site-packages/aries_cloudagent:z \
-	-v ../aries-acapy-didcomm-uniresolver/acapy-didcomm-uniresolver:/home/indy/aries-acapy-plugin-didcomm-uniresolver/acapy_plugin_didcomm_uniresolver:z \
-	acapy-didcomm-uniresolver
+	-v ../aries-acapy-didcomm-resolver/didcomm_resolver:/home/indy/aries-acapy-plugin-didcomm-resolver/didcomm_resolver:z \
+	acapy-didcomm-resolver
 ```
 
 ## Adjusting Parameters
@@ -33,7 +33,7 @@ $ docker run -it -p 3000:3000 -p 3001:3001 --rm \
 For each of the commands listed below, ensure the image has been built:
 
 ```sh
-$ docker build -t acapy-didcomm-uniresolver .
+$ docker build -t acapy-didcomm-resolver .
 ```
 
 #### Listing configuration options
@@ -41,7 +41,7 @@ $ docker build -t acapy-didcomm-uniresolver .
 To see a list of configuration options, run:
 
 ```sh
-$ docker run -it --rm acapy-didcomm-uniresolver start --help
+$ docker run -it --rm acapy-didcomm-resolver start --help
 ```
 
 #### Command line
@@ -59,7 +59,7 @@ different port), while keeping the defaults:
 
 ```sh
 $ docker run -it -p 3000:3000 -p 3003:3003 --rm \
-    acapy-didcomm-uniresolver start --arg-file default.yml --admin 0.0.0.0 3003
+    acapy-didcomm-resolver start --arg-file default.yml --admin 0.0.0.0 3003
 ```
 
 #### Configuration files
@@ -70,7 +70,7 @@ and specifying the file on startup:
 ```sh
 $ docker run -it -p 3000:3000 -p 3001:3001 --rm \
     -v ./configs:/local/configs:z \
-    acapy-didcomm-uniresolver start --arg-file /local/configs/my_config.yml
+    acapy-didcomm-resolver start --arg-file /local/configs/my_config.yml
 ```
 
 #### Environment
@@ -80,5 +80,5 @@ Compose `env` files to load configuration when appropriate. To see a list of
 configuration options and the mapping to environment variables map, run:
 
 ```sh
-$ docker run -it --rm acapy-didcomm-uniresolver start --help
+$ docker run -it --rm acapy-didcomm-resolver start --help
 ```

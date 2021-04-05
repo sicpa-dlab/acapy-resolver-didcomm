@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "didcomm-resolver"
+version = "0.1.0"
+description = "DIDComm DID Resolution protocol handlers and Resolver interface"
+authors = ["Adam Burdett <burdettadam@gmail.com>", "Daniel Bluhm <dbluhm@pm.me>"]
+license = "Apache-2.0"
+readme="README.md"
+repository="https://github.com/sicpa-dlab/aries-acapy-plugin-didcomm-resolver"
+
+[tool.poetry.dependencies]
+python = "^3.6.9"
+aries-cloudagent = {git = "https://github.com/sicpa-dlab/aries-cloudagent-python", rev = "integration/pydid"}
+aiohttp = "~=3.6.2"
+pydid = "~=0.2.2"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^3.9.0"
+black = "^20.8b1"
+pytest = "^6.2.2"
+pytest-asyncio = "^0.14.0"
+pytest-cov = "^2.11.1"
+asynctest = "0.13.0"
+pre-commit = "^2.11.1"
+
+[build-system]
+requires = ["setuptools", "poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = "tests -p no:warnings --cov=didcomm_resolver"

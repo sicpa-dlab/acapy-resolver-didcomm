@@ -13,40 +13,47 @@ def expand_message_class(cls):
 
     if not hasattr(cls, "message_type"):
         raise ValueError(
-            "Expected value message_type not found on class {}"
-            .format(cls.__name__)
+            "Expected value message_type not found on class {}".format(cls.__name__)
         )
     if not hasattr(cls, "Fields") and not hasattr(cls, "fields_from"):
         raise ValueError(
-            "Class {} must have nested class Fields or schema defining expected fields"
-            .format(cls.__name__)
+            "Class {} must have nested class Fields or schema "
+            "defining expected fields".format(cls.__name__)
         )
 
-    cls.Meta = type(cls.__name__ + ".Meta", (), {
-        "__module__": cls.__module__,
-        "message_type": cls.message_type,
-        "schema_class": cls.__name__ + ".Schema"
-    })
+    cls.Meta = type(
+        cls.__name__ + ".Meta",
+        (),
+        {
+            "__module__": cls.__module__,
+            "message_type": cls.message_type,
+            "schema_class": cls.__name__ + ".Schema",
+        },
+    )
 
     fields = {}
     if hasattr(cls, "Fields"):
-        fields.update({
-            var: getattr(cls.Fields, var)
-            for var in vars(cls.Fields)
-            if not var.startswith("__")
-        })
+        fields.update(
+            {
+                var: getattr(cls.Fields, var)
+                for var in vars(cls.Fields)
+                if not var.startswith("__")
+            }
+        )
     if hasattr(cls, "fields_from"):
         fields.update(cls.fields_from._declared_fields)
 
-    cls.Schema = type(cls.__name__ + ".Schema", (AgentMessageSchema,), {
-        "__module__": cls.__module__,
-        **fields
-    })
+    cls.Schema = type(
+        cls.__name__ + ".Schema",
+        (AgentMessageSchema,),
+        {"__module__": cls.__module__, **fields},
+    )
     cls.__slots__ = list(fields.keys())
-    cls.Schema.Meta = type(cls.Schema.__name__ + ".Meta", (), {
-        "__module__": cls.__module__,
-        "model_class": cls
-    })
+    cls.Schema.Meta = type(
+        cls.Schema.__name__ + ".Meta",
+        (),
+        {"__module__": cls.__module__, "model_class": cls},
+    )
     cls._get_schema_class = lambda: cls.Schema
 
     if hasattr(cls, "protocol") and cls.protocol:
@@ -68,17 +75,18 @@ def expand_model_class(cls):
     """Class decorator for removing boilerplate from BaseModels."""
     if not hasattr(cls, "Fields") and not hasattr(cls, "fields_from"):
         raise ValueError(
-            "Class {} must have nested class Fields or schema defining expected fields"
-            .format(cls.__name__)
+            "Class {} must have nested class Fields or schema "
+            "defining expected fields".format(cls.__name__)
         )
 
     if hasattr(cls, "Meta") and cls.Meta != BaseModel.Meta:
         cls.Meta.schema_class = cls.__name__ + ".Schema"
     else:
-        cls.Meta = type(cls.__name__ + ".Meta", (), {
-            "__module__": cls.__module__,
-            "schema_class": cls.__name__ + ".Schema"
-        })
+        cls.Meta = type(
+            cls.__name__ + ".Meta",
+            (),
+            {"__module__": cls.__module__, "schema_class": cls.__name__ + ".Schema"},
+        )
 
     fields = {}
     if hasattr(cls, "Fields"):
@@ -86,15 +94,17 @@ def expand_model_class(cls):
     if hasattr(cls, "fields_from"):
         fields.update(cls.fields_from._declared_fields)
 
-    cls.Schema = type(cls.__name__ + ".Schema", (BaseModelSchema,), {
-        "__module__": cls.__module__,
-        **fields
-    })
+    cls.Schema = type(
+        cls.__name__ + ".Schema",
+        (BaseModelSchema,),
+        {"__module__": cls.__module__, **fields},
+    )
     cls.__slots__ = list(fields.keys())
-    cls.Schema.Meta = type(cls.Schema.__name__ + ".Meta", (), {
-        "__module__": cls.__module__,
-        "model_class": cls
-    })
+    cls.Schema.Meta = type(
+        cls.Schema.__name__ + ".Meta",
+        (),
+        {"__module__": cls.__module__, "model_class": cls},
+    )
 
     if hasattr(cls, "unknown"):
         cls.Schema.Meta.unknown = cls.unknown
