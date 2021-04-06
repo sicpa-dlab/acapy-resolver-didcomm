@@ -2,4 +2,4 @@ aries-cloudagent@git+https://github.com/sicpa-dlab/aries-cloudagent-python.git@i
 pyyaml~=5.3.1
 flake8
 aiohttp~=3.6.2
-pydid~=0.2.2
+pydid~=0.2.3
