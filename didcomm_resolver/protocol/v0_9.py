@@ -20,7 +20,6 @@ from aries_cloudagent.protocols.problem_report.v1_0.message import (
 )
 from aries_cloudagent.resolver.base import DIDNotFound
 from marshmallow import fields
-from pydid import DIDDocument
 
 from ..acapy_tools import expand_message_class
 from ..acapy_tools.awaitable_handler import AwaitableErrorHandler, AwaitableHandler
@@ -82,7 +81,7 @@ class ResolveDID(DIDResolutionMessage):
         self.did = did
 
     @staticmethod
-    async def resolve_did(did, resolver_url) -> DIDDocument:
+    async def resolve_did(did, resolver_url) -> dict:
         """Resolve a DID using the resolver.
 
         resolver_url has to contain a {did} field.
@@ -186,11 +185,11 @@ class ResolveDIDResult(DIDResolutionMessage):
             """
             LOGGER.debug("ResolveDidResultHandler called with context %s", context)
             assert isinstance(context.message, ResolveDIDResult)
+            did_document = context.message.did_document
 
             LOGGER.info("Received resolve did document")
             LOGGER.debug("did document: %s", context.message.did_document)
 
-            did_document = DIDDocument.from_json(context.message.did_document)
 
             await responder.send_webhook(
                 "resolve_did_result",

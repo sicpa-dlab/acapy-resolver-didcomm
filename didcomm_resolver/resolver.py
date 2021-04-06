@@ -17,7 +17,6 @@ from aries_cloudagent.resolver.base import (
     ResolverType,
 )
 from aries_cloudagent.storage.base import BaseStorage
-from pydid import DID, DIDDocument
 import yaml
 
 from .acapy_tools.awaitable_handler import send_and_wait_for_response
@@ -117,7 +116,7 @@ class DIDCommResolver(BaseDIDResolver):
             )
             connection_ids = self._retrieve_connection_ids(records, method)
             responder = session.inject(BaseResponder)
-
+            assert responder
             for conn_id in connection_ids:
                 # Construct Resolve DID message
                 resolve_did_message = ResolveDID(did=did)
