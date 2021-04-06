@@ -84,33 +84,43 @@ class DIDCommResolver(BaseDIDResolver):
             session, cls.METADATA_KEY, {cls.METADATA_METHODS: methods}
         )
 
-    async def _resolve(self, profile: Profile, did: DID) -> DIDDocument:
+    def _retrieve_connection_ids(self, records: list, method: str = None):
+        """Retrieve connection ids from records."""
+        filtered_records = []
+        for record in records:
+            value = record.value
+            if isinstance(value, str):
+                value = json.loads(value)
+            if method and method in value["methods"]:
+                filtered_records.append(record)
+
+        connection_ids = [record.tags["connection_id"] for record in filtered_records]
+
+        if not connection_ids:
+            raise DIDMethodNotSupported(
+                f'No connection configured to resolve method "{method}"'
+            )
+
+        return connection_ids
+
+    async def _resolve(self, profile: Profile, did: str) -> dict:
         """Resolve DID through remote universal resolver."""
+
+        if not isinstance(did, str):
+            did = str(did)
+        method = did.split(":")[1]
         async with profile.session() as session:
             storage = session.inject(BaseStorage)
 
             records = await storage.find_all_records(
                 ConnRecord.RECORD_TYPE_METADATA, {"key": self.METADATA_KEY}
             )
-            filtered_records = [
-                record
-                for record in records or []
-                if did.method in json.loads(record.value)["methods"]
-            ]
-            connection_ids = [
-                record.tags["connection_id"] for record in filtered_records
-            ]
-
-            if not connection_ids:
-                raise DIDMethodNotSupported(
-                    f'No connection configured to resolve method "{did.method}"'
-                )
-
+            connection_ids = self._retrieve_connection_ids(records, method)
             responder = session.inject(BaseResponder)
-            assert responder
+
             for conn_id in connection_ids:
                 # Construct Resolve DID message
-                resolve_did_message = ResolveDID(did=str(did))
+                resolve_did_message = ResolveDID(did=did)
 
                 try:
                     response = await send_and_wait_for_response(
@@ -119,7 +129,10 @@ class DIDCommResolver(BaseDIDResolver):
                         responder=responder,
                         connection_id=conn_id,
                     )
-                    return DIDDocument.deserialize(response.did_document)
+                    result = response.did_document
+                    if not isinstance(result, dict):
+                        result = json.loads(result)
+                    return result
                 except DIDNotFound:
                     continue
 

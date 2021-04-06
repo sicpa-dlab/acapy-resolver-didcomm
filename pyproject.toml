@@ -11,7 +11,7 @@ repository="https://github.com/sicpa-dlab/aries-acapy-plugin-didcomm-resolver"
 python = "^3.6.9"
 aries-cloudagent = {git = "https://github.com/sicpa-dlab/aries-cloudagent-python", rev = "integration/pydid"}
 aiohttp = "~=3.6.2"
-pydid = "~=0.2.2"
+pydid = "~=0.2.3"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.9.0"
