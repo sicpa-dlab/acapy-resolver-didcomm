@@ -83,6 +83,27 @@ class DIDCommResolver(BaseDIDResolver):
             session, cls.METADATA_KEY, {cls.METADATA_METHODS: methods}
         )
 
+    @classmethod
+    async def update_connection(
+        cls,
+        session: ProfileSession,
+        connection_id: str,
+        methods: Sequence[str],
+    ):
+        """Update resolvers supported methods."""
+        await cls.register_connection(cls, connection_id,methods)
+
+    @classmethod
+    async def remove_connection(
+        cls,
+        session: ProfileSession,
+        connection_id: str,
+    ):
+        """Remove registered resolver connection."""
+        conn_record = await ConnRecord.retrieve_by_id(session, connection_id)
+        conn_record = cast(ConnRecord, conn_record)
+        await conn_record.metadata_delete(session, cls.METADATA_KEY)
+
     def _retrieve_connection_ids(self, records: list, method: str = None):
         """Retrieve connection ids from records."""
         filtered_records = []
