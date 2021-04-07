@@ -16,6 +16,7 @@ from didcomm_resolver import DIDCommResolver
 # pylint: disable=redefined-outer-name
 from tests import DOC
 
+
 class AsyncMock(MagicMock):
     async def __call__(self, *args, **kwargs):
         return super(AsyncMock, self).__call__(*args, **kwargs)
@@ -202,7 +203,6 @@ async def test_resolve_diddoc_json(ResolveDIDMock, send_wait_Mock, resolver, pro
     assert result == DOC
 
 
-
 @patch("didcomm_resolver.resolver.send_and_wait_for_response")
 @patch('didcomm_resolver.resolver.ResolveDIDResult')
 async def test_resolve_not_found(ResolveDIDMock, send_wait_Mock, resolver, profile):
@@ -226,6 +226,7 @@ async def test_resolve_not_found(ResolveDIDMock, send_wait_Mock, resolver, profi
     with pytest.raises(DIDNotFound):
         await resolver.resolve(profile, did_example)
 
+
 @patch("didcomm_resolver.resolver.send_and_wait_for_response")
 @patch('didcomm_resolver.resolver.ResolveDIDResult')
 async def test_resolve_not_supported(ResolveDIDMock, send_wait_Mock, resolver, profile):
@@ -234,7 +235,7 @@ async def test_resolve_not_supported(ResolveDIDMock, send_wait_Mock, resolver, p
     mock_inject.inject.return_value = True
 
     records = AsyncMock()
-    records.find_all_records.return_value = [StorageRecord(type="connection_metadata", value={"methods": ["example"]},
+    records.find_all_records.return_value = [StorageRecord(type="connection_metadata", value='{"methods": ["example"]}',
                       tags={"key": "didcomm_uniresolver",
                             "connection_id": "1732d18d-c6f6-4e68-b3a7-56cc31d3313b"},
                       id="5b9b78a061e6435bbbd7d5cde02d4192")]
@@ -243,3 +244,10 @@ async def test_resolve_not_supported(ResolveDIDMock, send_wait_Mock, resolver, p
 
     with pytest.raises(DIDMethodNotSupported):
         await resolver.resolve(profile, did_example)
+
+
+@patch('didcomm_resolver.resolver.ConnRecord.retrieve_by_id')
+async def test_register_connection(retrieve_by_id_mock, resolver, profile):
+    connection_id = "did:sov:201029023831"
+    methods = ["sov"]
+    await DIDCommResolver.register_connection(profile, connection_id, methods)
