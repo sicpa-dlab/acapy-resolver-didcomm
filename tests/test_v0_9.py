@@ -7,10 +7,14 @@ from aries_cloudagent.messaging.request_context import RequestContext
 from aries_cloudagent.messaging.responder import MockResponder
 from asynctest import mock
 
-from didcomm_resolver.protocol.v0_9 import ResolveDID, ResolveDIDResult, \
-    ResolveDIDProblemReport
+from didcomm_resolver.protocol.v0_9 import (
+    ResolveDID,
+    ResolveDIDResult,
+    ResolveDIDProblemReport,
+)
 
 from . import DOC
+
 
 @pytest.fixture
 def responder():
@@ -129,5 +133,3 @@ async def test_ResolveDIDProblemReport_handle():
 
     result = resolved_did.Handler().map_exception(context)
     assert "mocked" in result.message
-
-

@@ -7,7 +7,8 @@ import pytest
 from asynctest import mock
 from didcomm_resolver.acapy_tools.awaitable_handler import (
     AwaitableHandler,
-    AwaitableErrorHandler, send_and_wait_for_response,
+    AwaitableErrorHandler,
+    send_and_wait_for_response,
 )
 from aries_cloudagent.messaging.request_context import RequestContext
 from aries_cloudagent.messaging.responder import BaseResponder, MockResponder
@@ -90,6 +91,7 @@ async def test_send_and_wait_for_response():
 
     async def aux(*args, **kwargs):
         return None
+
     responder.send = aux
 
     await send_and_wait_for_response(message, response_type, responder)

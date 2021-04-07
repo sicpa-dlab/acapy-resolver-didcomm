@@ -3,13 +3,19 @@
 from asyncio import Future
 from unittest.mock import MagicMock, patch
 from asynctest import mock
-from didcomm_resolver.routes import connections, connection_register, register, \
-    post_process_routes
+from didcomm_resolver.routes import (
+    connections,
+    connection_register,
+    register,
+    post_process_routes,
+)
 import pytest
+
 
 class AsyncMock(MagicMock):
     async def __call__(self, *args, **kwargs):
         return super(AsyncMock, self).__call__(*args, **kwargs)
+
 
 @patch("didcomm_resolver.routes.ConnRecord")
 async def test_send_and_wait_for_response(conRecord_mock):
@@ -32,7 +38,7 @@ async def test_connection_register():
     async_mock = AsyncMock()
     async_mock.session.return_value = MagicMock()
 
-    my_dict = {'context': async_mock, 'conn_id': "123", 'c': 3}
+    my_dict = {"context": async_mock, "conn_id": "123", "c": 3}
 
     def getitem(name):
         return my_dict[name]
@@ -50,8 +56,10 @@ async def test_connection_register():
     assert result.reason == "OK"
     assert result.status == 200
 
+
 async def test_register():
     await register(MagicMock())
+
 
 async def test_post_process_routes():
     post_process_routes(MagicMock())
