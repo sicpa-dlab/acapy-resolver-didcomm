@@ -29,10 +29,10 @@ class DIDCommResolver(BaseDIDResolver):
     METADATA_KEY = "didcomm_resolver"
     METADATA_METHODS = "methods"
 
-    def __init__(self):
+    def __init__(self, supported_methods: list = []):
         """Initialize DIDCommResolver."""
         super().__init__(ResolverType.NON_NATIVE)
-        self._supported_methods = []
+        self._supported_methods = supported_methods
 
     async def setup(self, context: InjectionContext):
         """Load resolver specific configuration."""
@@ -83,7 +83,7 @@ class DIDCommResolver(BaseDIDResolver):
             session, cls.METADATA_KEY, {cls.METADATA_METHODS: methods}
         )
 
-    def _retrieve_connection_ids(self, records: list, method: str = None):
+    def _retrieve_connection_ids(self, records: list, method: str = None) -> list:
         """Retrieve connection ids from records."""
         filtered_records = []
         for record in records:

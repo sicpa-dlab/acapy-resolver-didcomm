@@ -1,5 +1,5 @@
-aries-cloudagent@git+https://github.com/sicpa-dlab/aries-cloudagent-python.git@integration/pydid
+aries-cloudagent@git+https://github.com/sicpa-dlab/aries-cloudagent-python.git@feature/did-resolver
 pyyaml~=5.3.1
 flake8
-aiohttp~=3.6.2
+aiohttp~=3.6.3
 pydid~=0.2.3

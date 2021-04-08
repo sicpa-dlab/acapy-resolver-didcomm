@@ -190,7 +190,6 @@ class ResolveDIDResult(DIDResolutionMessage):
             LOGGER.info("Received resolve did document")
             LOGGER.debug("did document: %s", context.message.did_document)
 
-
             await responder.send_webhook(
                 "resolve_did_result",
                 {

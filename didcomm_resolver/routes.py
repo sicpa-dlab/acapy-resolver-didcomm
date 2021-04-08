@@ -95,6 +95,7 @@ async def connections(request: web.BaseRequest):
     try:
         # TODO: implement
         # search metadata records for resolvers
+
         records = await ConnRecord.query(
             session, tag_filter, post_filter_positive=post_filter, alt=True
         )
