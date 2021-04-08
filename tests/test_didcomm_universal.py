@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 from aries_cloudagent.messaging.request_context import RequestContext
+from aries_cloudagent.messaging.responder import BaseResponder
 from aries_cloudagent.resolver.base import (
     ResolverError,
     DIDNotFound,
@@ -173,7 +174,15 @@ async def test_resolve_dict(ResolveDIDMock, send_wait_Mock, resolver, profile):
             id="5b9b78a061e6435bbbd7d5cde02d4192",
         )
     ]
-    profile.session.return_value.__aenter__.return_value.inject.return_value = records
+
+    def inject_aux(*args):
+        result = True
+        if str(args[0]).find("BaseResponder") < 0:
+            result = records
+        return result
+
+    profile.session.return_value.__aenter__.return_value.inject.side_effect = inject_aux
+
 
     async def aux(*args, **kwargs):
         mock = MagicMock()
@@ -206,7 +215,14 @@ async def test_resolve_diddoc_json(ResolveDIDMock, send_wait_Mock, resolver, pro
             id="5b9b78a061e6435bbbd7d5cde02d4192",
         )
     ]
-    profile.session.return_value.__aenter__.return_value.inject.return_value = records
+
+    def inject_aux(*args):
+        result = True
+        if str(args[0]).find("BaseResponder") < 0:
+            result = records
+        return result
+
+    profile.session.return_value.__aenter__.return_value.inject.side_effect = inject_aux
 
     async def aux(*args, **kwargs):
         mock = MagicMock()
@@ -239,7 +255,14 @@ async def test_resolve_not_found(ResolveDIDMock, send_wait_Mock, resolver, profi
             id="5b9b78a061e6435bbbd7d5cde02d4192",
         )
     ]
-    profile.session.return_value.__aenter__.return_value.inject.return_value = records
+
+    def inject_aux(*args):
+        result = True
+        if str(args[0]).find("BaseResponder") < 0:
+            result = records
+        return result
+
+    profile.session.return_value.__aenter__.return_value.inject.side_effect = inject_aux
 
     async def aux(*args, **kwargs):
         raise DIDNotFound()

@@ -116,6 +116,7 @@ class DIDCommResolver(BaseDIDResolver):
             )
             connection_ids = self._retrieve_connection_ids(records, method)
             responder = session.inject(BaseResponder)
+            assert responder
             for conn_id in connection_ids:
                 # Construct Resolve DID message
                 resolve_did_message = ResolveDID(did=did)
