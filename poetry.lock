@@ -103,7 +103,7 @@ uvloop = ["uvloop"]
 [package.source]
 type = "git"
 url = "https://github.com/sicpa-dlab/aries-cloudagent-python"
-reference = "integration/pydid"
+reference = "feature/did-resolver"
 resolved_reference = "0ab35570d53ce50aea3eb4b3cdacc87dbca8d8bb"
 
 [[package]]
