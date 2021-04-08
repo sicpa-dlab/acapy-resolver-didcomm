@@ -1,8 +1,7 @@
 """Test AwaitableHandler classes."""
 
-from asyncio import Future
+
 from unittest.mock import MagicMock, patch
-from asynctest import mock
 from didcomm_resolver.routes import (
     connections,
     connection_register,
@@ -10,6 +9,7 @@ from didcomm_resolver.routes import (
     post_process_routes,
 )
 import pytest
+from asynctest import mock
 
 
 class AsyncMock(MagicMock):
@@ -17,7 +17,8 @@ class AsyncMock(MagicMock):
         return super(AsyncMock, self).__call__(*args, **kwargs)
 
 
-@patch("didcomm_resolver.routes.ConnRecord")
+@pytest.mark.asyncio
+@mock.patch("didcomm_resolver.routes.ConnRecord")
 async def test_send_and_wait_for_response(conRecord_mock):
     async def list_aux(*args, **kwargs):
         return [MagicMock()]
@@ -29,11 +30,13 @@ async def test_send_and_wait_for_response(conRecord_mock):
 
     conRecord_mock.retrieve_by_id.side_effect = aux
     conRecord_mock.query.side_effect = list_aux
+
     result = await connections({"context": AsyncMock()})
     assert result.reason == "OK"
     assert result.status == 200
 
 
+@pytest.mark.asyncio
 async def test_connection_register():
     async_mock = AsyncMock()
     async_mock.session.return_value = MagicMock()
@@ -57,9 +60,11 @@ async def test_connection_register():
     assert result.status == 200
 
 
+@pytest.mark.asyncio
 async def test_register():
     await register(MagicMock())
 
 
+@pytest.mark.asyncio
 async def test_post_process_routes():
     post_process_routes(MagicMock())

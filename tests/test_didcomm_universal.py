@@ -1,11 +1,11 @@
 """Test universal resolver with did-comm messaging."""
 import json
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
+from asynctest import mock
 
 import pytest
 from aries_cloudagent.messaging.request_context import RequestContext
-from aries_cloudagent.messaging.responder import BaseResponder
 from aries_cloudagent.resolver.base import (
     ResolverError,
     DIDNotFound,
@@ -14,10 +14,8 @@ from aries_cloudagent.resolver.base import (
 from aries_cloudagent.storage.record import StorageRecord
 from asynctest import mock as async_mock
 
-# import didcomm_resolver.protocol.v0_9 as test_module
 from didcomm_resolver import DIDCommResolver
 
-# pylint: disable=redefined-outer-name
 from tests import DOC
 
 
@@ -146,17 +144,20 @@ async def test_setup_yaml_error(mock_open, resolver, context):
             await resolver.setup(context)
 
 
+@pytest.mark.asyncio
 def test_supported_methods(resolver):
     assert resolver.supported_methods
 
 
+@pytest.mark.asyncio
 def test_configre_error(resolver):
     with pytest.raises(ResolverError):
         resolver.configure({"fake": "configure"})
 
 
-@patch("didcomm_resolver.resolver.send_and_wait_for_response")
-@patch("didcomm_resolver.resolver.ResolveDIDResult")
+@pytest.mark.asyncio
+@mock.patch("didcomm_resolver.resolver.send_and_wait_for_response")
+@mock.patch("didcomm_resolver.resolver.ResolveDIDResult")
 async def test_resolve_dict(ResolveDIDMock, send_wait_Mock, resolver, profile):
     did_example = "did:sov:201029023831"
     mock_inject = MagicMock()
@@ -183,7 +184,6 @@ async def test_resolve_dict(ResolveDIDMock, send_wait_Mock, resolver, profile):
 
     profile.session.return_value.__aenter__.return_value.inject.side_effect = inject_aux
 
-
     async def aux(*args, **kwargs):
         mock = MagicMock()
         mock.did_document = DOC
@@ -193,11 +193,12 @@ async def test_resolve_dict(ResolveDIDMock, send_wait_Mock, resolver, profile):
 
     result = await resolver.resolve(profile, did_example)
 
-    assert result == DOC
+    assert result.serialize() == DOC
 
 
-@patch("didcomm_resolver.resolver.send_and_wait_for_response")
-@patch("didcomm_resolver.resolver.ResolveDIDResult")
+@pytest.mark.asyncio
+@mock.patch("didcomm_resolver.resolver.send_and_wait_for_response")
+@mock.patch("didcomm_resolver.resolver.ResolveDIDResult")
 async def test_resolve_diddoc_json(ResolveDIDMock, send_wait_Mock, resolver, profile):
     did_example = "did:sov:201029023831"
     mock_inject = MagicMock()
@@ -233,11 +234,12 @@ async def test_resolve_diddoc_json(ResolveDIDMock, send_wait_Mock, resolver, pro
 
     result = await resolver.resolve(profile, did_example)
 
-    assert result == DOC
+    assert result.serialize() == DOC
 
 
-@patch("didcomm_resolver.resolver.send_and_wait_for_response")
-@patch("didcomm_resolver.resolver.ResolveDIDResult")
+@pytest.mark.asyncio
+@mock.patch("didcomm_resolver.resolver.send_and_wait_for_response")
+@mock.patch("didcomm_resolver.resolver.ResolveDIDResult")
 async def test_resolve_not_found(ResolveDIDMock, send_wait_Mock, resolver, profile):
     did_example = "did:sov:201029023831"
     mock_inject = MagicMock()
@@ -273,8 +275,9 @@ async def test_resolve_not_found(ResolveDIDMock, send_wait_Mock, resolver, profi
         await resolver.resolve(profile, did_example)
 
 
-@patch("didcomm_resolver.resolver.send_and_wait_for_response")
-@patch("didcomm_resolver.resolver.ResolveDIDResult")
+@pytest.mark.asyncio
+@mock.patch("didcomm_resolver.resolver.send_and_wait_for_response")
+@mock.patch("didcomm_resolver.resolver.ResolveDIDResult")
 async def test_resolve_not_supported(ResolveDIDMock, send_wait_Mock, resolver, profile):
     did_example = "did:sov:201029023831"
     mock_inject = MagicMock()
@@ -298,8 +301,10 @@ async def test_resolve_not_supported(ResolveDIDMock, send_wait_Mock, resolver, p
         await resolver.resolve(profile, did_example)
 
 
-@patch("didcomm_resolver.resolver.ConnRecord.retrieve_by_id")
+@pytest.mark.asyncio
+@mock.patch("didcomm_resolver.resolver.ConnRecord.retrieve_by_id")
 async def test_register_connection(retrieve_by_id_mock, resolver, profile):
     connection_id = "did:sov:201029023831"
     methods = ["sov"]
+    retrieve_by_id_mock.return_value = AsyncMock()
     await DIDCommResolver.register_connection(profile, connection_id, methods)

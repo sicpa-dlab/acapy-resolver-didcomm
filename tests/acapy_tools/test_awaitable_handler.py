@@ -77,6 +77,7 @@ async def test_can_awaitable_error_handler(
         await ExampleErrorHandler().handle(context, mock_responder)
 
 
+@pytest.mark.asyncio
 async def test_send_and_wait_for_response():
     message = mock.MagicMock()
     response_type = mock.MagicMock()

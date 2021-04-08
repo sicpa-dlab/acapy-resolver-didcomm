@@ -105,6 +105,7 @@ async def test_handle_error(context, responder, message, mock_resolve_did):
         await message.handle(context, responder)
 
 
+@pytest.mark.asyncio
 async def test_ResolveDIDResult_handle(resolved_did):
     context = MagicMock()
     context.message = resolved_did
@@ -117,6 +118,7 @@ async def test_ResolveDIDResult_handle(resolved_did):
     await resolved_did.Handler().do_handle(context, responder)
 
 
+@pytest.mark.asyncio
 async def test_ResolveDIDProblemReport_handle():
     context = MagicMock()
     context.explain_ltxt = "mocked"
