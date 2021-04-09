@@ -105,7 +105,11 @@ class ResolveDID(DIDResolutionMessage):
             responder: responder callback
         """
         LOGGER.debug("ResolveDidHandler called with context %s", context)
-        assert isinstance(context.message, ResolveDID)
+        if not isinstance(context.message, ResolveDID):
+            raise HandlerException(
+                f"Message incorrect due bad type "
+                f"({type(context.message)} but ResolveDID expected)"
+            )
 
         LOGGER.info("Received resolve did: %s", context.message.did)
 
@@ -184,7 +188,13 @@ class ResolveDIDResult(DIDResolutionMessage):
                 responder: responder callback
             """
             LOGGER.debug("ResolveDidResultHandler called with context %s", context)
-            assert isinstance(context.message, ResolveDIDResult)
+
+            if not isinstance(context.message, ResolveDIDResult):
+                raise HandlerException(
+                    f"Message incorrect due bad type "
+                    f"({type(context.message)} but ResolveDIDResult expected)"
+                )
+
             did_document = context.message.did_document
 
             LOGGER.info("Received resolve did document")
