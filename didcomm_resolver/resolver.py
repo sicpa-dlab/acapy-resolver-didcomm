@@ -118,12 +118,9 @@ class DIDCommResolver(BaseDIDResolver):
             )
             connection_ids = self._retrieve_connection_ids(records, method)
             responder = session.inject(BaseResponder)
-            if not responder:
-                raise ResolverError(
-                    "Unable to setup message handlers to send responses"
-                )
 
             exception_message = "DID not found on any resolver connections({})"
+            not_found_conn_ids = []
             for conn_id in connection_ids:
                 # Construct Resolve DID message
                 resolve_did_message = ResolveDID(did=did)
@@ -140,8 +137,8 @@ class DIDCommResolver(BaseDIDResolver):
                         result = json.loads(result)
                     return result
                 except DIDNotFound:
-                    exception_message.format(conn_id + ", {}")
+                    not_found_conn_ids.append(conn_id)
                     continue
 
-            exception_message = exception_message.replace(", {}", "")
+            exception_message = exception_message.format(", ".join(not_found_conn_ids))
             raise DIDNotFound(exception_message)

@@ -122,7 +122,7 @@ class ResolveDID(DIDResolutionMessage):
                 f"Could not resolve DID {context.message.did} using service"
                 f" {resolver_url}"
             )
-            reply_msg = ResolveDIDProblemReport()
+            reply_msg = ResolveDIDProblemReport(explain_ltxt=msg)
 
         else:
             reply_msg = ResolveDIDResult(did_document=did_document)
