@@ -122,13 +122,18 @@ class ResolveDID(DIDResolutionMessage):
                 f"Could not resolve DID {context.message.did} using service"
                 f" {resolver_url}"
             )
-            raise HandlerException(msg)
+            reply_msg = ResolveDIDProblemReport()
+
         else:
             reply_msg = ResolveDIDResult(did_document=did_document)
-            reply_msg.assign_thread_from(context.message)
-            if "l10n" in context.message._decorators:
-                reply_msg._decorators["l10n"] = context.message._decorators["l10n"]
-            await responder.send_reply(reply_msg)
+
+        reply_msg.assign_thread_from(context.message)
+        if "l10n" in context.message._decorators:
+            reply_msg._decorators["l10n"] = context.message._decorators["l10n"]
+        await responder.send_reply(reply_msg)
+
+        if isinstance(reply_msg, ResolveDIDProblemReport):
+            raise HandlerException(msg)
 
 
 @expand_message_class

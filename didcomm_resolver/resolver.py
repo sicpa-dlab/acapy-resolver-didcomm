@@ -20,7 +20,7 @@ from aries_cloudagent.storage.base import BaseStorage
 import yaml
 
 from .acapy_tools.awaitable_handler import send_and_wait_for_response
-from .protocol.v0_9 import ResolveDID, ResolveDIDResult, ResolveDIDProblemReport
+from .protocol.v0_9 import ResolveDID, ResolveDIDResult
 
 
 class DIDCommResolver(BaseDIDResolver):
@@ -144,16 +144,4 @@ class DIDCommResolver(BaseDIDResolver):
                     continue
 
             exception_message = exception_message.replace(", {}", "")
-            try:
-                await send_and_wait_for_response(
-                    message=exception_message,
-                    response_type=ResolveDIDProblemReport,
-                    responder=responder,
-                )
-            except Exception as exc:
-                exception_message = (
-                    f"Failing propagating back "
-                    f"the exception_message {exception_message} "
-                    f"due the following exception {str(exc)}"
-                )
             raise DIDNotFound(exception_message)
