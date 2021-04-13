@@ -96,6 +96,14 @@ async def test_handle_resolve_did(context, responder, message, mock_resolve_did)
 
 
 @pytest.mark.asyncio
+async def test_handle_resolve_did_fail(context, responder, message, mock_resolve_did):
+    """Test resolve did handler."""
+    context.message = "error"
+    with pytest.raises(HandlerException):
+        await message.handle(context, responder)
+
+
+@pytest.mark.asyncio
 async def test_handle_error(context, responder, message, mock_resolve_did):
     """Test resolve did handler."""
     mock_resolve_did.resolve_did = mock.CoroutineMock(side_effect=HandlerException())
@@ -116,6 +124,20 @@ async def test_ResolveDIDResult_handle(resolved_did):
     responder = MagicMock()
     responder.send_webhook.side_effect = aux
     await resolved_did.Handler().do_handle(context, responder)
+
+
+@pytest.mark.asyncio
+async def test_ResolveDIDResult_handle_fail(resolved_did):
+    context = MagicMock()
+    context.message = "Error"
+
+    async def aux(*args, **kwargs):
+        return None
+
+    responder = MagicMock()
+    responder.send_webhook.side_effect = aux
+    with pytest.raises(HandlerException):
+        await resolved_did.Handler().do_handle(context, responder)
 
 
 @pytest.mark.asyncio

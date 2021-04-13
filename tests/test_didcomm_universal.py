@@ -123,6 +123,18 @@ async def test_setup(mock_open, resolver, context):
         assert resolver._supported_methods == "test"
 
 
+@async_mock.patch(
+    "builtins.open", new_callable=async_mock.mock_open, read_data=FAKE_YAML0
+)
+@async_mock.patch("yaml.load")
+@pytest.mark.asyncio
+async def test_setup_failed(yaml_load, mock_open, resolver, context):
+    yaml_load.return_value = "fail"
+    with async_mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "fake_config"}):
+        with pytest.raises(ResolverError):
+            await resolver.setup(context)
+
+
 @pytest.mark.asyncio
 @async_mock.patch("os.environ")
 async def test_setup_env_error(env_mock, resolver, context):
@@ -272,6 +284,46 @@ async def test_resolve_not_found(ResolveDIDMock, send_wait_Mock, resolver, profi
     send_wait_Mock.side_effect = aux
 
     with pytest.raises(DIDNotFound):
+        await resolver.resolve(profile, did_example)
+
+
+@pytest.mark.asyncio
+@mock.patch("didcomm_resolver.resolver.send_and_wait_for_response")
+@mock.patch("didcomm_resolver.resolver.ResolveDIDResult")
+async def test_resolve_responder_fail(
+    ResolveDIDMock, send_wait_Mock, resolver, profile
+):
+    did_example = "did:sov:201029023831"
+    mock_inject = MagicMock()
+    mock_inject.inject.return_value = True
+
+    records = AsyncMock()
+    records.find_all_records.return_value = [
+        StorageRecord(
+            type="connection_metadata",
+            value={"methods": ["sov"]},
+            tags={
+                "key": "didcomm_uniresolver",
+                "connection_id": "1732d18d-c6f6-4e68-b3a7-56cc31d3313b",
+            },
+            id="5b9b78a061e6435bbbd7d5cde02d4192",
+        )
+    ]
+
+    def inject_aux(*args):
+        result = None
+        if str(args[0]).find("BaseResponder") < 0:
+            result = records
+        return result
+
+    profile.session.return_value.__aenter__.return_value.inject.side_effect = inject_aux
+
+    async def aux(*args, **kwargs):
+        raise DIDNotFound()
+
+    send_wait_Mock.side_effect = aux
+
+    with pytest.raises(ResolverError):
         await resolver.resolve(profile, did_example)
 
 
