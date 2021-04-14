@@ -103,8 +103,10 @@ async def connections(request: web.BaseRequest):
         results.sort(key=connection_sort_key)
         resolvers = []
         for conn in results:
-            record = await ConnRecord.retrieve_by_id(session, conn.connection_id)
-            resolvers.append(await record.metadata_get(session, "didcomm_resolver"))
+            record = await ConnRecord.retrieve_by_id(session, conn.get("connection_id"))
+            didcomm_record = await record.metadata_get(session, "didcomm_resolver")
+            if didcomm_record:
+                resolvers.append(didcomm_record)
         # reduce metadata records into a list of conn_id
         # TODO: reduce
     except (StorageError, BaseModelError) as err:
