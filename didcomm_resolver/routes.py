@@ -159,7 +159,7 @@ async def connection(request: web.BaseRequest):
 async def connection_register(request: web.BaseRequest):
     context: AdminRequestContext = request["context"]
     session = await context.session()
-    connection_id = getattr(request,'match_info').get("conn_id")
+    connection_id = request.match_info.get("conn_id")
     body = await request.json() if request.body_exists else {}
     methods: Sequence[str] = body.get("methods",[''])
     try:
@@ -182,7 +182,7 @@ async def connection_remove(request: web.BaseRequest):
         request: aiohttp request object
     """
     context: AdminRequestContext = request["context"]
-    connection_id = getattr(request,'match_info').get("conn_id")
+    connection_id = request.match_info.get("conn_id")
     session = await context.session()
 
     try:
@@ -208,6 +208,7 @@ async def register(app: web.Application):
             web.post("/resolver/register/{conn_id}", connection_register),
             # Removing a connection as a resolver
             web.delete("/resolver/connections/{conn_id}", connection_remove),
+            # TODO: add support for future rfc for requesting resolving service
         ]
     )
 
