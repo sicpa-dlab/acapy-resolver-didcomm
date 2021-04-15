@@ -1,6 +1,5 @@
 """Routes for DIDComm Resolver."""
-# import json
-
+import json
 from aiohttp import web
 from aiohttp_apispec import (
     docs,
@@ -8,6 +7,7 @@ from aiohttp_apispec import (
     request_schema,
     response_schema,
 )
+from typing import Sequence
 
 from marshmallow import fields
 
@@ -18,11 +18,13 @@ from aries_cloudagent.connections.models.conn_record import ConnRecord
 from aries_cloudagent.messaging.models.base import BaseModelError
 from aries_cloudagent.messaging.models.openapi import OpenAPISchema
 from aries_cloudagent.messaging.valid import UUIDFour
+from aries_cloudagent.storage.base import BaseStorage
 from aries_cloudagent.storage.error import StorageError, StorageNotFoundError
 from aries_cloudagent.resolver import DIDResolverRegistry
 from .resolver import DIDCommResolver
 
 DID_COMM_SPEC_URI = ""  # FIXME: PLS
+METADATA_KEY = DIDCommResolver.METADATA_KEY
 
 
 class ConnIdMatchInfoSchema(OpenAPISchema):
@@ -46,6 +48,12 @@ class ConnectionRegisterResultSchema(OpenAPISchema):
     """Result schema for connection register."""
 
     fields.Str(description="Connection id of registered resolver.")
+
+
+class ConnectionRemoveResponseSchema(OpenAPISchema):
+    """Result schema for connection register."""
+
+    fields.Str(description="Connection id of removed resolver.")
 
 
 class ConnectionListSchema(OpenAPISchema):
@@ -74,43 +82,88 @@ async def connections(request: web.BaseRequest):
 
     """
     context: AdminRequestContext = request["context"]
-
-    tag_filter = {}
-    post_filter = {}
     session = await context.session()
 
-    def connection_sort_key(conn):
+    def connection_sort_key(conn_metadata):
         """Get the sorting key for a particular connection."""
-
-        conn_rec_state = ConnRecord.State.get(conn["state"])
+        conn, _ = conn_metadata
+        conn_rec_state = ConnRecord.State.get(conn.state)
         if conn_rec_state is ConnRecord.State.ABANDONED:
             pfx = "2"
         elif conn_rec_state is ConnRecord.State.INVITATION:
             pfx = "1"
         else:
             pfx = "0"
-
-        return pfx + conn["created_at"]
+        return pfx + conn.created_at
 
     try:
-        # TODO: implement
         # search metadata records for resolvers
+        records = await ConnRecord.query(session)
+        resolvers_matadata = [
+            (record, await record.metadata_get(session, METADATA_KEY))
+            for record in records
+        ]
+        # filter non resolver records
+        resolvers_matadata = [
+            (conn, metadata) for (conn, metadata) in resolvers_matadata if metadata
+        ]
+        # sort by connection state
+        resolvers_matadata.sort(key=connection_sort_key)
+        # prepare results with relevant information
+        results = []
+        for (conn, metadata) in resolvers_matadata:
 
-        records = await ConnRecord.query(
-            session, tag_filter, post_filter_positive=post_filter, alt=True
-        )
-        results = [record.serialize() for record in records]
-        results.sort(key=connection_sort_key)
-        resolvers = []
-        for conn in results:
-            record = await ConnRecord.retrieve_by_id(session, conn.connection_id)
-            resolvers.append(await record.metadata_get(session, "didcomm_resolver"))
-        # reduce metadata records into a list of conn_id
-        # TODO: reduce
+            if not isinstance(metadata, dict):
+                value = json.loads(metadata.value)
+            else:
+                value = metadata
+            results.append(
+                {
+                    "connection_id": conn.connection_id,
+                    "methods": value["methods"],
+                    "state": conn.state,
+                }
+            )
     except (StorageError, BaseModelError) as err:
         raise web.HTTPBadRequest(reason=err.roll_up) from err
 
-    return web.json_response(resolvers)
+    return web.json_response(results)
+
+
+@docs(
+    tags=["resolver"],
+    summary="get resolver connection details.",
+)
+@response_schema(ConnectionListSchema(), 200, description="")
+async def connection(request: web.BaseRequest):
+    """
+    Request handler for listing a single resolver connection.
+
+    Args:
+        request: aiohttp request object
+
+    Returns:
+        The connection list response
+
+    """
+    context: AdminRequestContext = request["context"]
+    connection_id = request.match_info["conn_id"]
+    session = await context.session()
+    try:
+        record = await ConnRecord.retrieve_by_id(session, connection_id)
+        metadata = await record.metadata_get(session, METADATA_KEY)
+        if not isinstance(metadata, dict):
+            metadata = json.loads(metadata.value)
+        methods = [] if metadata is None else metadata["methods"]
+        resolver = {
+            "connection_id": record.connection_id,
+            "methods": methods,
+            "state": record.state,
+        }
+    except (StorageError, BaseModelError) as err:
+        raise web.HTTPBadRequest(reason=err.roll_up) from err
+
+    return web.json_response(resolver)
 
 
 @docs(tags=["resolver"], summary="Register connection as a new resolver.")
@@ -120,17 +173,44 @@ async def connections(request: web.BaseRequest):
 async def connection_register(request: web.BaseRequest):
     context: AdminRequestContext = request["context"]
     session = await context.session()
-    connection_id = request.match_info["conn_id"]
+    connection_id = request.match_info.get("conn_id")
     body = await request.json() if request.body_exists else {}
-    methods = body.get("methods")
+    methods: Sequence[str] = body.get("methods", [""])
     try:
+
         registry: DIDResolverRegistry = session.inject(DIDResolverRegistry)
-        resolver = DIDCommResolver(supported_methods=methods)
-        registry.register(resolver)
+        # registry.register_connection(session, connection_id, methods)
+        registry.register(methods)
+
     except StorageNotFoundError as err:
         raise web.HTTPBadRequest(reason=err.roll_up) from err
 
     return web.json_response({connection_id: methods})
+
+
+@docs(tags=["connection"], summary="Remove an existing connection record")
+@match_info_schema(ConnIdMatchInfoSchema())
+@response_schema(ConnectionRemoveResponseSchema, 200, description="")
+async def connection_remove(request: web.BaseRequest):
+    """
+    Request handler for removing a connection record.
+
+    Args:
+        request: aiohttp request object
+    """
+    context: AdminRequestContext = request["context"]
+    connection_id = request.match_info.get("conn_id")
+    session = await context.session()
+
+    try:
+        registry: DIDResolverRegistry = session.inject(DIDResolverRegistry)
+        registry.remove_connection(session, connection_id)
+    except StorageNotFoundError as err:
+        raise web.HTTPNotFound(reason=err.roll_up) from err
+    except StorageError as err:
+        raise web.HTTPBadRequest(reason=err.roll_up) from err
+
+    return web.json_response({})
 
 
 async def register(app: web.Application):
@@ -138,10 +218,15 @@ async def register(app: web.Application):
 
     app.add_routes(
         [
+            # Listing resolver connections
             web.get("/resolver/connections", connections, allow_head=False),
-            # web.get("/resolver/connections/{conn_id}", connection, allow_head=False),
+            # Retrieving details for a single resolver connection
+            web.get("/resolver/connections/{conn_id}", connection, allow_head=False),
+            # Registering a connection as a resolver
             web.post("/resolver/register/{conn_id}", connection_register),
-            # web.delete("/resolver/connections/{conn_id}", connection_remove),
+            # Removing a connection as a resolver
+            web.delete("/resolver/connections/{conn_id}", connection_remove),
+            # TODO: add support for future rfc for requesting resolving service
         ]
     )
 
