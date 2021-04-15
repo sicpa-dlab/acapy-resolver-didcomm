@@ -146,6 +146,44 @@ def test_auto_accept_conn(resolver, requester):
     assert received
 
 
+def test_retrieve_connections(established_connection):
+    """Test retrieve DIDComm Connections."""
+    resp = requests.get("http://requester:3001/resolver/connections")
+    assert resp.ok
+
+
+def test_register_method(established_connection):
+    """Test register method over DIDComm Connection."""
+    conn_id = requests.get(f"http://requester:3001/connections").json()["results"][0][
+        "connection_id"]
+    body = {"methods": ["testingmethod"]}
+
+    resp = requests.post(f"http://requester:3001/resolver/register/{conn_id}", json=body)
+    assert resp.ok
+    assert resp.json() == {conn_id: body.get("methods")}
+
+@pytest.mark.skip(reason="endpoint not yet available")
+def test_get_connections_by_conn_id(established_connection):
+    """Test retrieve DIDComm Connection by conn_id."""
+    # TODO: Implement when route is available
+    # current_conn = requests.get(f"http://requester:3001/connections").json()
+    # conn_id = current_conn["results"][0]["connection_id"]
+
+    # resp = requests.get(f"http://requester:3001/resolver/register/{conn_id}")
+    # assert resp.ok
+
+@pytest.mark.skip(reason="endpoint not yet available")
+def test_delete_connections_by_conn_id(established_connection):
+    """Test delete DIDComm Connection by conn_id."""
+    # TODO: Implement when route is available
+    # current_conn = requests.get(f"http://requester:3001/connections").json()
+    # conn_id = current_conn["results"][0]["connection_id"]
+
+    # resp = requests.delete(f"http://requester:3001/resolver/register/{conn_id}")
+    # assert resp.ok
+    # resp = requests.get(f"http://requester:3001/resolver/register/{conn_id}")
+    # assert not resp.ok
+
 def test_no_resolver_connection_returns_error(established_connection):
     """Test resolution over DIDComm Connection."""
     resp = requests.get("http://requester:3001/resolver/resolve/did:example:123")
