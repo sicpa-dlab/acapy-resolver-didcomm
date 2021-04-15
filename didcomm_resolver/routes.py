@@ -1,6 +1,5 @@
 """Routes for DIDComm Resolver."""
 import json
-
 from aiohttp import web
 from aiohttp_apispec import (
     docs,
@@ -26,6 +25,7 @@ from .resolver import DIDCommResolver
 
 DID_COMM_SPEC_URI = ""  # FIXME: PLS
 METADATA_KEY = DIDCommResolver.METADATA_KEY
+
 
 class ConnIdMatchInfoSchema(OpenAPISchema):
     """Path parameters and validators for request taking connection id."""
@@ -86,33 +86,44 @@ async def connections(request: web.BaseRequest):
 
     def connection_sort_key(conn_metadata):
         """Get the sorting key for a particular connection."""
-        conn,_ = conn_metadata
-        conn_rec_state = ConnRecord.State.get(conn["state"])
+        conn, _ = conn_metadata
+        conn_rec_state = ConnRecord.State.get(conn.state)
         if conn_rec_state is ConnRecord.State.ABANDONED:
             pfx = "2"
         elif conn_rec_state is ConnRecord.State.INVITATION:
             pfx = "1"
         else:
             pfx = "0"
-        return pfx + conn["created_at"]
+        return pfx + conn.created_at
 
     try:
         # search metadata records for resolvers
         records = await ConnRecord.query(session)
-        resolvers_matadata = [ (record, await record.metadata_get(session, METADATA_KEY)) for record in records]
+        resolvers_matadata = [
+            (record, await record.metadata_get(session, METADATA_KEY))
+            for record in records
+        ]
         # filter non resolver records
-        resolvers_matadata = [(conn,metadata) for (conn,metadata) in resolvers_matadata if metadata]
+        resolvers_matadata = [
+            (conn, metadata) for (conn, metadata) in resolvers_matadata if metadata
+        ]
         # sort by connection state
         resolvers_matadata.sort(key=connection_sort_key)
         # prepare results with relevant information
         results = []
-        for (conn,metadata) in resolvers_matadata:
-            value = json.loads(metadata.value)
+        for (conn, metadata) in resolvers_matadata:
+
+            if not isinstance(metadata, dict):
+                value = json.loads(metadata.value)
+            else:
+                value = metadata
             results.append(
-                {"connection_id": conn.tags["connection_id"],
-                 "methods": value["methods"],
-                 "state": conn.state,
-                })
+                {
+                    "connection_id": conn.connection_id,
+                    "methods": value["methods"],
+                    "state": conn.state,
+                }
+            )
     except (StorageError, BaseModelError) as err:
         raise web.HTTPBadRequest(reason=err.roll_up) from err
 
@@ -141,11 +152,14 @@ async def connection(request: web.BaseRequest):
     try:
         record = await ConnRecord.retrieve_by_id(session, connection_id)
         metadata = await record.metadata_get(session, METADATA_KEY)
-        methods = [] if metadata is None else json.loads(metadata.value)["methods"]
-        resolver ={"connection_id": record.tags["connection_id"],
-                 "methods": methods,
-                 "state": record.state,
-                }
+        if not isinstance(metadata, dict):
+            metadata = json.loads(metadata.value)
+        methods = [] if metadata is None else metadata["methods"]
+        resolver = {
+            "connection_id": record.connection_id,
+            "methods": methods,
+            "state": record.state,
+        }
     except (StorageError, BaseModelError) as err:
         raise web.HTTPBadRequest(reason=err.roll_up) from err
 
@@ -161,10 +175,13 @@ async def connection_register(request: web.BaseRequest):
     session = await context.session()
     connection_id = request.match_info.get("conn_id")
     body = await request.json() if request.body_exists else {}
-    methods: Sequence[str] = body.get("methods",[''])
+    methods: Sequence[str] = body.get("methods", [""])
     try:
+
         registry: DIDResolverRegistry = session.inject(DIDResolverRegistry)
-        registry.register_connection(session,connection_id,methods)
+        # registry.register_connection(session, connection_id, methods)
+        registry.register(methods)
+
     except StorageNotFoundError as err:
         raise web.HTTPBadRequest(reason=err.roll_up) from err
 
@@ -194,6 +211,7 @@ async def connection_remove(request: web.BaseRequest):
         raise web.HTTPBadRequest(reason=err.roll_up) from err
 
     return web.json_response({})
+
 
 async def register(app: web.Application):
     """Register routes."""

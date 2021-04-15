@@ -123,6 +123,7 @@ def established_connection(resolver, requester):
 
 def test_conn_invitation(resolver):
     """Test connection invitation."""
+
     resp = resolver.create_invitation(auto_accept="false")
     assert resp["invitation"]
     invite = resp["invitation"]
@@ -132,59 +133,211 @@ def test_conn_invitation(resolver):
 
 def test_conn_receive_accept_invite(resolver, requester):
     """Test connection receive accept invite."""
+
     invite = resolver.create_invitation(auto_accept="false")["invitation"]
     received = requester.receive_invite(invite, auto_accept="false")
     time.sleep(1)
     resp = requester.accept_invite(received["connection_id"])
+
     assert resp
 
 
 def test_auto_accept_conn(resolver, requester):
     """Test auto accepting connection."""
+
     invite = resolver.create_invitation(auto_accept="true")["invitation"]
     received = requester.receive_invite(invite, auto_accept="true")
+
     assert received
+
+
+def test_retrieve_zero_connections(established_connection):
+    """Test retrieve DIDComm Connections."""
+
+    resp = requests.get("http://requester:3001/resolver/connections")
+
+    assert resp.ok
+    assert len(resp.json()) == 0
+
+
+def test_register_didcomm_connection(established_connection):
+    """Test retrieve DIDComm Connections."""
+
+    body = {
+        "metadata": {"didcomm_resolver": {"methods": ["test"]}},
+        "recipient_keys": ["H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"],
+        "routing_keys": ["H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"],
+        "service_endpoint": "http://requester:3001",
+    }
+
+    resp = requests.post(
+        "http://requester:3001/connections/create-invitation", json=body
+    )
+
+    assert resp.ok
 
 
 def test_retrieve_connections(established_connection):
     """Test retrieve DIDComm Connections."""
+
     resp = requests.get("http://requester:3001/resolver/connections")
+
     assert resp.ok
+    assert len(resp.json()) == 1
 
 
+@pytest.mark.skip(reason="Implementation not functional yet")
 def test_register_method(established_connection):
     """Test register method over DIDComm Connection."""
-    conn_id = requests.get(f"http://requester:3001/connections").json()["results"][0][
-        "connection_id"]
-    body = {"methods": ["testingmethod"]}
 
-    resp = requests.post(f"http://requester:3001/resolver/register/{conn_id}", json=body)
+    conn_id = requests.get(f"http://requester:3001/resolver/connections").json()[0][
+        "connection_id"
+    ]
+
+    method = "testingmethod"
+    body = {"methods": [method]}
+
+    resp = requests.post(
+        f"http://requester:3001/resolver/register/{conn_id}", json=body
+    )
     assert resp.ok
     assert resp.json() == {conn_id: body.get("methods")}
 
-@pytest.mark.skip(reason="endpoint not yet available")
-def test_get_connections_by_conn_id(established_connection):
-    """Test retrieve DIDComm Connection by conn_id."""
-    # TODO: Implement when route is available
-    # current_conn = requests.get(f"http://requester:3001/connections").json()
-    # conn_id = current_conn["results"][0]["connection_id"]
+    methods = requests.get(f"http://requester:3001/resolver/connections").json()[0][
+        "methods"
+    ]
 
-    # resp = requests.get(f"http://requester:3001/resolver/register/{conn_id}")
-    # assert resp.ok
+    assert methods.ok
+    assert method in methods
+
+
+@pytest.mark.skip(reason="Implementation not functional yet")
+def test_remove_connection_record(established_connection):
+    """Test remove DIDComm Connection record."""
+
+    conn_id = requests.get(f"http://requester:3001/resolver/connections").json()[0][
+        "connection_id"
+    ]
+
+    method = "testingmethod"
+
+    resp = requests.delete(f"http://requester:3001/resolver/connections/{conn_id}")
+    assert resp.ok
+    assert resp.json() == {}
+
+    conections = requests.get(f"http://requester:3001/resolver/connections")
+
+    assert conections.ok
+    assert len(conections.json()) == 0
+
 
 @pytest.mark.skip(reason="endpoint not yet available")
 def test_delete_connections_by_conn_id(established_connection):
     """Test delete DIDComm Connection by conn_id."""
-    # TODO: Implement when route is available
-    # current_conn = requests.get(f"http://requester:3001/connections").json()
-    # conn_id = current_conn["results"][0]["connection_id"]
 
-    # resp = requests.delete(f"http://requester:3001/resolver/register/{conn_id}")
-    # assert resp.ok
-    # resp = requests.get(f"http://requester:3001/resolver/register/{conn_id}")
-    # assert not resp.ok
+    # TODO: Implement when route is available
+    current_conn = requests.get(f"http://requester:3001/connections").json()
+    conn_id = current_conn["results"][0]["connection_id"]
+
+    resp = requests.delete(f"http://requester:3001/resolver/register/{conn_id}")
+
+    assert resp.ok
+
+    resp = requests.get(f"http://requester:3001/resolver/register/{conn_id}")
+
+    assert not resp.ok
+
 
 def test_no_resolver_connection_returns_error(established_connection):
     """Test resolution over DIDComm Connection."""
+
     resp = requests.get("http://requester:3001/resolver/resolve/did:example:123")
+
     assert not resp.ok
+
+
+@pytest.mark.skip(reason="Implementation not functional yet")
+def test_json_ld_sign(established_connection):
+    """Test sign json ld."""
+    # TODO: Implement when route is available
+
+    body = {
+        "document": {
+            "@context": ["https://www.w3.org/ns/did/v1"],
+            "id": "did:sov:WRfXPg8dantKVubE3HX8pw",
+            "verificationMethod": [
+                {
+                    "type": "Ed25519VerificationKey2018",
+                    "id": "did:sov:WRfXPg8dantKVubE3HX8pw#key-1",
+                    "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV",
+                }
+            ],
+            "service": [
+                {
+                    "type": "agent",
+                    "serviceEndpoint": "https://agents.danubeclouds.com/agent/WRfXPg8dantKVubE3HX8pw",
+                },
+                {
+                    "type": "xdi",
+                    "serviceEndpoint": "https://xdi03-at.danubeclouds.com/cl/+!:did:sov:WRfXPg8dantKVubE3HX8pw",
+                },
+            ],
+            "authentication": [
+                {
+                    "type": "Ed25519VerificationKey2018",
+                    "id": "did:sov:WRfXPg8dantKVubE3HX8pw#key-1",
+                    "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV",
+                }
+            ],
+            "assertionMethod": [
+                {
+                    "type": "Ed25519VerificationKey2018",
+                    "id": "did:sov:WRfXPg8dantKVubE3HX8pw#key-1",
+                    "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV",
+                }
+            ],
+        },
+        "verificationMethod": "did:sov:WRfXPg8dantKVubE3HX8pw#key-1",
+    }
+
+    resp = requests.post("http://requester:3001/jsonld/sign", json=body)
+
+    assert resp.ok
+
+
+@pytest.mark.skip(reason="Implementation not functional yet")
+def test_json_ld_verify(established_connection):
+    """ Verify sign for json ld"""
+    # TODO: Implement when route is available
+
+    body = {
+        "verkey": "5yKdnU7ToTjAoRNDzfuzVTfWBH38qyhE1b9xh4v8JaWF",
+        "doc": {
+            "@context": [
+                "https://www.w3.org/2018/credentials/v1",
+                "https://www.w3.org/2018/credentials/examples/v1",
+            ],
+            "id": "http://example.gov/credentials/3732",
+            "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+            "issuer": "did:key:z6MkjRagNiMu91DduvCvgEsqLZDVzrJzFrwahc4tXLt9DoHd",
+            "issuanceDate": "2020-03-10T04:24:12.164Z",
+            "credentialSubject": {
+                "id": "did:key:z6MkjRagNiMu91DduvCvgEsqLZDVzrJzFrwahc4tXLt9DoHd",
+                "degree": {
+                    "type": "BachelorDegree",
+                    "name": "Bachelor of Science and Arts",
+                },
+            },
+            "proof": {
+                "type": "Ed25519Signature2018",
+                "created": "2020-04-10T21:35:35Z",
+                "verificationMethod": "did:key:z6MkjRagNiMu91DduvCvgEsqLZDVzrJzFrwahc4tXLt9DoHd#z6MkjRagNiMu91DduvCvgEsqLZDVzrJzFrwahc4tXLt9DoHd",
+                "proofPurpose": "assertionMethod",
+                "jws": "eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..l9d0YHjcFAH2H4dB9xlWFZQLUpixVCWJk0eOt4CXQe1NXKWZwmhmn9OQp6YxX0a2LffegtYESTCJEoGVXLqWAA",
+            },
+        },
+    }
+
+    resp = requests.post("http://requester:3001/jsonld/verify", json=body)
+    assert resp.ok
+    assert resp.json() == {"valid": True}

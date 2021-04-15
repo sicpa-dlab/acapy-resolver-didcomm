@@ -92,7 +92,7 @@ class DIDCommResolver(BaseDIDResolver):
         methods: Sequence[str],
     ):
         """Update resolvers supported methods."""
-        await cls.register_connection(cls, connection_id,methods)
+        await cls.register_connection(cls, connection_id, methods)
 
     @classmethod
     async def remove_connection(
