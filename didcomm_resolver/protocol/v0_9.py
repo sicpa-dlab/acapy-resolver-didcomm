@@ -105,7 +105,11 @@ class ResolveDID(DIDResolutionMessage):
             responder: responder callback
         """
         LOGGER.debug("ResolveDidHandler called with context %s", context)
-        assert isinstance(context.message, ResolveDID)
+        if not isinstance(context.message, ResolveDID):
+            raise HandlerException(
+                f"Message incorrect due bad type "
+                f"({type(context.message)} but ResolveDID expected)"
+            )
 
         LOGGER.info("Received resolve did: %s", context.message.did)
 
@@ -118,13 +122,18 @@ class ResolveDID(DIDResolutionMessage):
                 f"Could not resolve DID {context.message.did} using service"
                 f" {resolver_url}"
             )
-            raise HandlerException(msg)
+            reply_msg = ResolveDIDProblemReport(explain_ltxt=msg)
+
         else:
             reply_msg = ResolveDIDResult(did_document=did_document)
-            reply_msg.assign_thread_from(context.message)
-            if "l10n" in context.message._decorators:
-                reply_msg._decorators["l10n"] = context.message._decorators["l10n"]
-            await responder.send_reply(reply_msg)
+
+        reply_msg.assign_thread_from(context.message)
+        if "l10n" in context.message._decorators:
+            reply_msg._decorators["l10n"] = context.message._decorators["l10n"]
+        await responder.send_reply(reply_msg)
+
+        if isinstance(reply_msg, ResolveDIDProblemReport):
+            raise HandlerException(msg)
 
 
 @expand_message_class
@@ -184,12 +193,17 @@ class ResolveDIDResult(DIDResolutionMessage):
                 responder: responder callback
             """
             LOGGER.debug("ResolveDidResultHandler called with context %s", context)
-            assert isinstance(context.message, ResolveDIDResult)
+
+            if not isinstance(context.message, ResolveDIDResult):
+                raise HandlerException(
+                    f"Message incorrect due bad type "
+                    f"({type(context.message)} but ResolveDIDResult expected)"
+                )
+
             did_document = context.message.did_document
 
             LOGGER.info("Received resolve did document")
             LOGGER.debug("did document: %s", context.message.did_document)
-
 
             await responder.send_webhook(
                 "resolve_did_result",

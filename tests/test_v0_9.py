@@ -1,4 +1,5 @@
 """Test Protocol handlers of DID Resolution protocl v0.9."""
+from unittest.mock import MagicMock
 
 import pytest
 from aries_cloudagent.messaging.base_handler import HandlerException
@@ -6,7 +7,11 @@ from aries_cloudagent.messaging.request_context import RequestContext
 from aries_cloudagent.messaging.responder import MockResponder
 from asynctest import mock
 
-from didcomm_resolver.protocol.v0_9 import ResolveDID, ResolveDIDResult
+from didcomm_resolver.protocol.v0_9 import (
+    ResolveDID,
+    ResolveDIDResult,
+    ResolveDIDProblemReport,
+)
 
 from . import DOC
 
@@ -91,6 +96,14 @@ async def test_handle_resolve_did(context, responder, message, mock_resolve_did)
 
 
 @pytest.mark.asyncio
+async def test_handle_resolve_did_fail(context, responder, message, mock_resolve_did):
+    """Test resolve did handler."""
+    context.message = "error"
+    with pytest.raises(HandlerException):
+        await message.handle(context, responder)
+
+
+@pytest.mark.asyncio
 async def test_handle_error(context, responder, message, mock_resolve_did):
     """Test resolve did handler."""
     mock_resolve_did.resolve_did = mock.CoroutineMock(side_effect=HandlerException())
@@ -98,3 +111,49 @@ async def test_handle_error(context, responder, message, mock_resolve_did):
         ResolveDID, "resolve_did", mock.CoroutineMock(side_effect=HandlerException())
     ):
         await message.handle(context, responder)
+
+
+@pytest.mark.asyncio
+async def test_ResolveDIDResult_handle(resolved_did):
+    context = MagicMock()
+    context.message = resolved_did
+
+    async def aux(*args, **kwargs):
+        return None
+
+    responder = MagicMock()
+    responder.send_webhook.side_effect = aux
+    await resolved_did.Handler().do_handle(context, responder)
+
+
+@pytest.mark.asyncio
+async def test_ResolveDIDResult_handle_fail(resolved_did):
+    context = MagicMock()
+    context.message = "Error"
+
+    async def aux(*args, **kwargs):
+        return None
+
+    responder = MagicMock()
+    responder.send_webhook.side_effect = aux
+    with pytest.raises(HandlerException):
+        await resolved_did.Handler().do_handle(context, responder)
+
+
+@pytest.mark.asyncio
+async def test_ResolveDIDProblemReport_handle():
+    context = MagicMock()
+    context.explain_ltxt = "mocked"
+    resolved_did = ResolveDIDProblemReport()
+    context.message = resolved_did
+
+    async def aux(*args, **kwargs):
+        return None
+
+    responder = MagicMock()
+    responder.send_webhook.side_effect = aux
+
+    await resolved_did.Handler().do_handle(context, responder)
+
+    result = resolved_did.Handler().map_exception(context)
+    assert "mocked" in result.message

@@ -8,6 +8,7 @@ from asynctest import mock
 from didcomm_resolver.acapy_tools.awaitable_handler import (
     AwaitableHandler,
     AwaitableErrorHandler,
+    send_and_wait_for_response,
 )
 from aries_cloudagent.messaging.request_context import RequestContext
 from aries_cloudagent.messaging.responder import BaseResponder, MockResponder
@@ -33,14 +34,14 @@ class ExampleErrorHandler(AwaitableErrorHandler):
 
 @pytest.fixture
 def request_message():
-    message = mock.MagicMock(spec=AgentMessage)
+    message = mock.MagicMock()
     message._message_id = THREAD_ID
     yield message
 
 
 @pytest.fixture
 def response_message():
-    message = mock.MagicMock(spec=AgentMessage)
+    message = mock.MagicMock()
     message._thread_id = THREAD_ID
     yield message
 
@@ -74,3 +75,24 @@ async def test_can_awaitable_error_handler(
     ExampleErrorHandler.response_to(request_message)
     with pytest.raises(Exception):
         await ExampleErrorHandler().handle(context, mock_responder)
+
+
+@pytest.mark.asyncio
+async def test_send_and_wait_for_response():
+    message = mock.MagicMock()
+    response_type = mock.MagicMock()
+    responder = mock.MagicMock()
+
+    class TestHandler(ExampleHandler):
+        async def response_to(self, *args, **kwargs):
+            """Handle Example message or something."""
+            return "message"
+
+    response_type.Handler = TestHandler()
+
+    async def aux(*args, **kwargs):
+        return None
+
+    responder.send = aux
+
+    await send_and_wait_for_response(message, response_type, responder)

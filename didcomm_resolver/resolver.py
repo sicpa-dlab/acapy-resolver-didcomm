@@ -29,10 +29,10 @@ class DIDCommResolver(BaseDIDResolver):
     METADATA_KEY = "didcomm_resolver"
     METADATA_METHODS = "methods"
 
-    def __init__(self):
+    def __init__(self, supported_methods: list = []):
         """Initialize DIDCommResolver."""
         super().__init__(ResolverType.NON_NATIVE)
-        self._supported_methods = []
+        self._supported_methods = supported_methods
 
     async def setup(self, context: InjectionContext):
         """Load resolver specific configuration."""
@@ -46,7 +46,8 @@ class DIDCommResolver(BaseDIDResolver):
             raise ResolverError(
                 f"Failed to load configuration file for {self.__class__.__name__}"
             ) from err
-        assert isinstance(configuration, dict)
+        if not isinstance(configuration, dict):
+            raise ResolverError("Configuration file is not properly loaded")
         self.configure(configuration)
 
     def configure(self, configuration: dict):
@@ -118,7 +119,8 @@ class DIDCommResolver(BaseDIDResolver):
 
         if not connection_ids:
             raise DIDMethodNotSupported(
-                f'No connection configured to resolve method "{method}"'
+                f"Not found any resolver connections "
+                f'with method "{method}" and records "{records}"'
             )
 
         return connection_ids
@@ -137,7 +139,9 @@ class DIDCommResolver(BaseDIDResolver):
             )
             connection_ids = self._retrieve_connection_ids(records, method)
             responder = session.inject(BaseResponder)
-            assert responder
+
+            exception_message = "DID not found on any resolver connections({})"
+            not_found_conn_ids = []
             for conn_id in connection_ids:
                 # Construct Resolve DID message
                 resolve_did_message = ResolveDID(did=did)
@@ -154,6 +158,8 @@ class DIDCommResolver(BaseDIDResolver):
                         result = json.loads(result)
                     return result
                 except DIDNotFound:
+                    not_found_conn_ids.append(conn_id)
                     continue
 
-            raise DIDNotFound("DID not found on any resolver connections")
+            exception_message = exception_message.format(", ".join(not_found_conn_ids))
+            raise DIDNotFound(exception_message)
