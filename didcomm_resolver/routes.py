@@ -177,8 +177,9 @@ async def connection_register(request: web.BaseRequest):
     body = await request.json() if request.body_exists else {}
     methods: Sequence[str] = body.get("methods", [""])
     try:
-        didcomm_resolver: DIDCommResolver = session.inject(DIDCommResolver)
-        results = await didcomm_resolver.register_connection(session, connection_id, methods)
+        results = await DIDCommResolver.register_connection(
+            session, connection_id, methods
+        )
     except StorageNotFoundError as err:
         raise web.HTTPNotFound(reason=err.roll_up) from err
     except BaseModelError as err:
@@ -197,13 +198,12 @@ async def connection_update(request: web.BaseRequest):
     body = await request.json() if request.body_exists else {}
     methods: Sequence[str] = body.get("methods", [""])
     try:
-        didcomm_resolver: DIDCommResolver = session.inject(DIDCommResolver)
-        results = await didcomm_resolver.update_connection(session, connection_id, methods)
+        await DIDCommResolver.update_connection(session, connection_id, methods)
     except StorageNotFoundError as err:
         raise web.HTTPNotFound(reason=err.roll_up) from err
     except BaseModelError as err:
         raise web.HTTPBadRequest(reason=err.roll_up) from err
-    return web.json_response({"results": results})
+    return web.json_response({"results": "Ok"})
 
 
 @docs(tags=["connection"], summary="Remove an existing connection record")
@@ -220,8 +220,7 @@ async def connection_remove(request: web.BaseRequest):
     connection_id = request.match_info.get("conn_id")
     session = await context.session()
     try:
-        didcomm_resolver: DIDCommResolver = session.inject(DIDCommResolver)
-        results = await didcomm_resolver.remove_connection(session, connection_id)
+        results = await DIDCommResolver.remove_connection(session, connection_id)
     except StorageNotFoundError as err:
         raise web.HTTPNotFound(reason=err.roll_up) from err
     except BaseModelError as err:

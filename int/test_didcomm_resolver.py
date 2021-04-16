@@ -7,7 +7,45 @@ import requests
 import time
 from functools import wraps
 
-TEST_DID = "did:key:z6Mkfriq1MqLBoPWecGoDLjguo1sB9brj6wT3qZ5BxkKpuP6"
+DID_KEY = "did:key:z6Mkfriq1MqLBoPWecGoDLjguo1sB9brj6wT3qZ5BxkKpuP6"
+DID_SOV = "did:sov:WRfXPg8dantKVubE3HX8pw"
+
+DID_DOC_SOV = {
+    "@context": ["https://www.w3.org/ns/did/v1"],
+    "id": "did:sov:WRfXPg8dantKVubE3HX8pw",
+    "verificationMethod": [
+        {
+            "type": "Ed25519VerificationKey2018",
+            "id": "did:sov:WRfXPg8dantKVubE3HX8pw#key-1",
+            "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV",
+        }
+    ],
+    "service": [
+        {
+            "type": "agent",
+            "serviceEndpoint": "https://agents.danubeclouds.com/agent/WRfXPg8dantKVubE3HX8pw",
+        },
+        {
+            "type": "xdi",
+            "serviceEndpoint": "https://xdi03-at.danubeclouds.com/cl/+!:did:sov:WRfXPg8dantKVubE3HX8pw",
+        },
+    ],
+    "authentication": [
+        {
+            "type": "Ed25519VerificationKey2018",
+            "id": "did:sov:WRfXPg8dantKVubE3HX8pw#key-1",
+            "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV",
+        }
+    ],
+    "assertionMethod": [
+        {
+            "type": "Ed25519VerificationKey2018",
+            "id": "did:sov:WRfXPg8dantKVubE3HX8pw#key-1",
+            "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV",
+        }
+    ],
+}
+
 AUTO_ACCEPT = "false"
 
 RESOLVER = "http://resolver:3001"
@@ -186,11 +224,74 @@ def test_retrieve_connections(established_connection):
     assert len(resp.json()) == 1
 
 
+def test_retrieve_specific_connection_by_id(established_connection):
+    """Test retrieve DIDComm Connections by id."""
+
+    conn_id = requests.get("http://requester:3001/resolver/connections").json()[0][
+        "connection_id"
+    ]
+
+    resp = requests.get(f"http://requester:3001/resolver/connections/{conn_id}")
+    assert resp.ok
+    assert resp.json()["connection_id"] == conn_id
+
+
+def test_fail_to_retrieve_no_existing_specific_connection_by_id(established_connection):
+    """Test to fail the retrieve DIDComm Connections by id."""
+
+    conn_id = "not-existing-id"
+
+    resp = requests.get(f"http://requester:3001/resolver/connections/{conn_id}")
+    assert not resp.ok
+
+
+def test_remove_connection_record(established_connection):
+    """Test remove DIDComm Connection record."""
+
+    conn_id = requests.get(f"http://requester:3001/resolver/connections").json()[0][
+        "connection_id"
+    ]
+
+    resp = requests.delete(f"http://requester:3001/resolver/connections/{conn_id}")
+    assert resp.ok
+    assert resp.json() == {"results": {}}
+
+    conections = requests.get(f"http://requester:3001/resolver/connections")
+
+    assert conections.ok
+    assert len(conections.json()) == 0
+
+
+def test_fail_to_remove_no_existing_connection_record(established_connection):
+    """Test to fail the remove DIDComm Connection record."""
+
+    conn_id = "no-existing-id"
+    resp = requests.delete(f"http://requester:3001/resolver/connections/{conn_id}")
+    assert not resp.ok
+
+
+def test_no_resolver_connection_returns_error(established_connection):
+    """Test resolution over DIDComm Connection."""
+
+    resp = requests.get(f"http://requester:3001/resolver/resolve/{DID_KEY}")
+
+    assert not resp.ok
+
+
 @pytest.mark.skip(reason="Implementation not functional yet")
+def test_no_resolver_connection_returns_error(established_connection):
+    """Test resolution over DIDComm Connection."""
+
+    resp = requests.get(f"http://requester:3001/resolver/resolve/{DID_SOV}")
+
+    assert resp.ok
+    assert resp.json()["did_doc"] == DID_DOC_SOV
+
+
 def test_register_method(established_connection):
     """Test register method over DIDComm Connection."""
 
-    conn_id = requests.get(f"http://requester:3001/resolver/connections").json()[0][
+    conn_id = requests.get(f"http://requester:3001/connections").json()["results"][0][
         "connection_id"
     ]
 
@@ -201,58 +302,63 @@ def test_register_method(established_connection):
         f"http://requester:3001/resolver/register/{conn_id}", json=body
     )
     assert resp.ok
-    assert resp.json() == {conn_id: body.get("methods")}
+    assert resp.json() == {
+        "results": {"didcomm_resolver": {"methods": ["testingmethod"]}}
+    }
 
     methods = requests.get(f"http://requester:3001/resolver/connections").json()[0][
         "methods"
     ]
 
-    assert methods.ok
     assert method in methods
 
 
-@pytest.mark.skip(reason="Implementation not functional yet")
-def test_remove_connection_record(established_connection):
-    """Test remove DIDComm Connection record."""
+def test_fail_register_method_to_not_existing_conn_id(established_connection):
+    """Test to fail the register method over DIDComm Connection."""
+
+    conn_id = "no-existing-id"
+
+    method = "testingmethod"
+    body = {"methods": [method]}
+
+    resp = requests.post(
+        f"http://requester:3001/resolver/register/{conn_id}", json=body
+    )
+
+    assert not resp.ok
+
+
+def test_update_method(established_connection):
+    """Test update connection methods that are resolvable over DIDComm Connection."""
 
     conn_id = requests.get(f"http://requester:3001/resolver/connections").json()[0][
         "connection_id"
     ]
 
-    method = "testingmethod"
+    method = "updatedtestingmethod"
+    method2 = "newmethod"
+    body = {"methods": [method, method2]}
 
-    resp = requests.delete(f"http://requester:3001/resolver/connections/{conn_id}")
+    resp = requests.post(f"http://requester:3001/resolver/update/{conn_id}", json=body)
     assert resp.ok
-    assert resp.json() == {}
+    assert resp.json() == {"results": "Ok"}
 
-    conections = requests.get(f"http://requester:3001/resolver/connections")
+    methods = requests.get(f"http://requester:3001/resolver/connections").json()[0][
+        "methods"
+    ]
 
-    assert conections.ok
-    assert len(conections.json()) == 0
-
-
-@pytest.mark.skip(reason="endpoint not yet available")
-def test_delete_connections_by_conn_id(established_connection):
-    """Test delete DIDComm Connection by conn_id."""
-
-    # TODO: Implement when route is available
-    current_conn = requests.get(f"http://requester:3001/connections").json()
-    conn_id = current_conn["results"][0]["connection_id"]
-
-    resp = requests.delete(f"http://requester:3001/resolver/register/{conn_id}")
-
-    assert resp.ok
-
-    resp = requests.get(f"http://requester:3001/resolver/register/{conn_id}")
-
-    assert not resp.ok
+    assert [method, method2] == methods
 
 
-def test_no_resolver_connection_returns_error(established_connection):
-    """Test resolution over DIDComm Connection."""
+def test_fail_to_update_method_due_not_existing_conn_id(established_connection):
+    """Test to fail the update connection methods that are resolvable over DIDComm Connection."""
 
-    resp = requests.get("http://requester:3001/resolver/resolve/did:example:123")
+    conn_id = "no-existing-id"
+    method = "updatedtestingmethod"
+    method2 = "newmethod"
+    body = {"methods": [method, method2]}
 
+    resp = requests.post(f"http://requester:3001/resolver/update/{conn_id}", json=body)
     assert not resp.ok
 
 
