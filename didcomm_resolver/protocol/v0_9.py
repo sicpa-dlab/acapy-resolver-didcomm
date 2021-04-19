@@ -4,7 +4,6 @@ import logging
 from datetime import datetime
 from typing import Union
 
-import aiohttp
 from aries_cloudagent.messaging.agent_message import AgentMessage
 from aries_cloudagent.messaging.base_handler import (
     BaseResponder,
@@ -19,6 +18,7 @@ from aries_cloudagent.protocols.problem_report.v1_0.message import (
     ProblemReportSchema,
 )
 from aries_cloudagent.resolver.base import DIDNotFound
+from aries_cloudagent.resolver.did_resolver import DIDResolver
 from marshmallow import fields
 
 from ..acapy_tools import expand_message_class
@@ -81,21 +81,10 @@ class ResolveDID(DIDResolutionMessage):
         self.did = did
 
     @staticmethod
-    async def resolve_did(did, resolver_url) -> dict:
-        """Resolve a DID using the resolver.
-
-        resolver_url has to contain a {did} field.
-        """
-        url = resolver_url.format(did=did)
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status >= 200 and response.status < 400:
-                    content = await response.json()
-                    return content["didDocument"]
-                raise HandlerException(
-                    f"Failed to resolve DID {did} using URL {url} with status "
-                    "{response.status}"
-                )
+    async def resolve_did(context: RequestContext, did: str) -> dict:
+        """Resolve a DID using the did resolver interface."""
+        resolver = context.inject(DIDResolver)
+        return (await resolver.resolve(context.profile, did)).serialize()
 
     async def handle(self, context: RequestContext, responder: BaseResponder):
         """Resolve a DID in response to a resolve message.
@@ -113,15 +102,11 @@ class ResolveDID(DIDResolutionMessage):
 
         LOGGER.info("Received resolve did: %s", context.message.did)
 
-        resolver_url = context.settings.get("didcomm_resolver.endpoint")
         try:
-            did_document = await self.resolve_did(context.message.did, resolver_url)
+            did_document = await self.resolve_did(context, context.message.did)
         except Exception as err:
             LOGGER.error(str(err))
-            msg = (
-                f"Could not resolve DID {context.message.did} using service"
-                f" {resolver_url}"
-            )
+            msg = f"Could not resolve DID {context.message.did}"
             reply_msg = ResolveDIDProblemReport(explain_ltxt=msg)
 
         else:
@@ -216,6 +201,7 @@ class ResolveDIDResult(DIDResolutionMessage):
             )
 
 
+@expand_message_class
 class ResolveDIDProblemReport(DIDResolutionMessage, ProblemReport):
     """Message for reporting errors from the remote resolver."""
 
