@@ -1,9 +1,10 @@
 """Didcommm Universal DID Resolver."""
 
+import logging
 import json
 import os
 from pathlib import Path
-from typing import Sequence, cast
+from typing import Optional, Sequence, cast
 
 from aries_cloudagent.config.injection_context import InjectionContext
 from aries_cloudagent.connections.models.conn_record import ConnRecord
@@ -23,16 +24,19 @@ from .acapy_tools.awaitable_handler import send_and_wait_for_response
 from .protocol.v0_9 import ResolveDID, ResolveDIDResult
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 class DIDCommResolver(BaseDIDResolver):
     """Universal DID Resolver with DIDCOMM messages."""
 
     METADATA_KEY = "didcomm_resolver"
     METADATA_METHODS = "methods"
 
-    def __init__(self, supported_methods: list = []):
+    def __init__(self):
         """Initialize DIDCommResolver."""
         super().__init__(ResolverType.NON_NATIVE)
-        self._supported_methods = supported_methods
+        self._supported_methods: Optional[Sequence[str]] = None
 
     async def setup(self, context: InjectionContext):
         """Load resolver specific configuration."""
@@ -121,8 +125,7 @@ class DIDCommResolver(BaseDIDResolver):
 
         if not connection_ids:
             raise DIDMethodNotSupported(
-                f"Not found any resolver connections "
-                f'with method "{method}" and records "{records}"'
+                f'Resolver connection supporting method "{method}" not found'
             )
 
         return connection_ids
