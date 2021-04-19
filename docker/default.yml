@@ -6,7 +6,8 @@ admin-insecure-mode: true
 
 # Load toolbox plugin
 plugin:
-  - didcomm_resolver
+  - didcomm_resolver.role.resolver
+  - didcomm_resolver.role.requester
 
 # Transport
 inbound-transport:
