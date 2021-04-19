@@ -17,6 +17,7 @@ RUN chown -R indy:indy aries-acapy-plugin-didcomm-resolver
 USER $user
 
 RUN cd aries-acapy-plugin-didcomm-resolver; poetry install --no-dev
+RUN pip3 install -I git+https://github.com/hyperledger/aries-cloudagent-python@main
 
 ENTRYPOINT ["/bin/bash", "-c", "aca-py \"$@\"", "--"]
 CMD ["start", "--arg-file", "default.yml"]
