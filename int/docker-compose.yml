@@ -15,6 +15,10 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    volumes:
+      - "./acapy_resolver_mocked_github/__init__.py:/home/indy/aries-acapy-plugin-didcomm-resolver/didcomm_resolver/__init__.py"
+      - "./acapy_resolver_mocked_github/resolver_mock.py:/home/indy/aries-acapy-plugin-didcomm-resolver/didcomm_resolver/resolver_mock.py"
+
     command: start --arg-file default.yml --plugin didcomm_resolver -e http://resolver:3000
 
   #*************************************************************
@@ -24,6 +28,10 @@ services:
 
   requester:
     image: didcomm-resolver-testing
+    volumes:
+      - "./acapy_resolver_mocked_github/resolver_mock.py:/home/indy/aries-acapy-plugin-didcomm-resolver/didcomm_resolver/resolver_mock.py"
+      - "./acapy_resolver_mocked_github/__init__.py:/home/indy/aries-acapy-plugin-didcomm-resolver/didcomm_resolver/__init__.py"
+
     command: start --arg-file default.yml --plugin didcomm_resolver -e http://requester:3000
 
   #*************************************************************
