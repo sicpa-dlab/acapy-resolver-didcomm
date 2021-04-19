@@ -88,7 +88,7 @@ async def test_send_and_wait_for_response():
             """Handle Example message or something."""
             return "message"
 
-    response_type.Handler = TestHandler()
+    response_type.Handler = TestHandler
 
     async def aux(*args, **kwargs):
         return None
