@@ -83,6 +83,7 @@ class DIDCommResolver(BaseDIDResolver):
         await conn_record.metadata_set(
             session, cls.METADATA_KEY, {cls.METADATA_METHODS: methods}
         )
+        return await conn_record.metadata_get_all(session)
 
     @classmethod
     async def update_connection(
@@ -92,7 +93,7 @@ class DIDCommResolver(BaseDIDResolver):
         methods: Sequence[str],
     ):
         """Update resolvers supported methods."""
-        await cls.register_connection(cls, connection_id, methods)
+        await cls.register_connection(session, connection_id, methods)
 
     @classmethod
     async def remove_connection(
@@ -104,6 +105,7 @@ class DIDCommResolver(BaseDIDResolver):
         conn_record = await ConnRecord.retrieve_by_id(session, connection_id)
         conn_record = cast(ConnRecord, conn_record)
         await conn_record.metadata_delete(session, cls.METADATA_KEY)
+        return await conn_record.metadata_get_all(session)
 
     def _retrieve_connection_ids(self, records: list, method: str = None):
         """Retrieve connection ids from records."""

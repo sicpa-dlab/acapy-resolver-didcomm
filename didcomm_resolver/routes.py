@@ -177,15 +177,33 @@ async def connection_register(request: web.BaseRequest):
     body = await request.json() if request.body_exists else {}
     methods: Sequence[str] = body.get("methods", [""])
     try:
-
-        registry: DIDResolverRegistry = session.inject(DIDResolverRegistry)
-        # registry.register_connection(session, connection_id, methods)
-        registry.register(methods)
-
+        results = await DIDCommResolver.register_connection(
+            session, connection_id, methods
+        )
     except StorageNotFoundError as err:
+        raise web.HTTPNotFound(reason=err.roll_up) from err
+    except BaseModelError as err:
         raise web.HTTPBadRequest(reason=err.roll_up) from err
+    return web.json_response({"results": results})
 
-    return web.json_response({connection_id: methods})
+
+@docs(tags=["resolver"], summary="Update connection methods that are resolvable.")
+@match_info_schema(ConnIdMatchInfoSchema())
+@request_schema(ConnectionRegisterRequestSchema())
+@response_schema(ConnectionRegisterResultSchema(), 200, description="")
+async def connection_update(request: web.BaseRequest):
+    context: AdminRequestContext = request["context"]
+    session = await context.session()
+    connection_id = request.match_info.get("conn_id")
+    body = await request.json() if request.body_exists else {}
+    methods: Sequence[str] = body.get("methods", [""])
+    try:
+        await DIDCommResolver.update_connection(session, connection_id, methods)
+    except StorageNotFoundError as err:
+        raise web.HTTPNotFound(reason=err.roll_up) from err
+    except BaseModelError as err:
+        raise web.HTTPBadRequest(reason=err.roll_up) from err
+    return web.json_response({"results": "Ok"})
 
 
 @docs(tags=["connection"], summary="Remove an existing connection record")
@@ -201,16 +219,13 @@ async def connection_remove(request: web.BaseRequest):
     context: AdminRequestContext = request["context"]
     connection_id = request.match_info.get("conn_id")
     session = await context.session()
-
     try:
-        registry: DIDResolverRegistry = session.inject(DIDResolverRegistry)
-        registry.remove_connection(session, connection_id)
+        results = await DIDCommResolver.remove_connection(session, connection_id)
     except StorageNotFoundError as err:
         raise web.HTTPNotFound(reason=err.roll_up) from err
-    except StorageError as err:
+    except BaseModelError as err:
         raise web.HTTPBadRequest(reason=err.roll_up) from err
-
-    return web.json_response({})
+    return web.json_response({"results": results})
 
 
 async def register(app: web.Application):
@@ -224,6 +239,7 @@ async def register(app: web.Application):
             web.get("/resolver/connections/{conn_id}", connection, allow_head=False),
             # Registering a connection as a resolver
             web.post("/resolver/register/{conn_id}", connection_register),
+            web.post("/resolver/update/{conn_id}", connection_update),
             # Removing a connection as a resolver
             web.delete("/resolver/connections/{conn_id}", connection_remove),
             # TODO: add support for future rfc for requesting resolving service
