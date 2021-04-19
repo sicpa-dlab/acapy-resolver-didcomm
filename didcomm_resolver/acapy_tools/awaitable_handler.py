@@ -18,7 +18,7 @@ async def send_and_wait_for_response(
     **send_kwargs
 ):
     """Send a message and await a message of type."""
-    assert isinstance(response_type.Handler, AwaitableHandler)
+    assert issubclass(response_type.Handler, AwaitableHandler)
     response_handle: Future = response_type.Handler.response_to(message)
     await responder.send(message, **send_kwargs)
     return await response_handle
