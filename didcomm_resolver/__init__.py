@@ -3,8 +3,11 @@
 import logging
 
 from aries_cloudagent.config.injection_context import InjectionContext
+from .resolver import DIDCommResolver
 
 LOGGER = logging.getLogger(__name__)
+
+__all__ = ["DIDCommResolver"]
 
 
 async def setup(context: InjectionContext):

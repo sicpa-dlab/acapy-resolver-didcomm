@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from aiohttp import web
 from aries_cloudagent.messaging.models.base import BaseModelError
 
-from didcomm_resolver.routes import (
+from didcomm_resolver.role.requester.routes import (
     connections,
     connection,
     connection_register,
@@ -16,7 +16,7 @@ from didcomm_resolver.routes import (
 )
 import pytest
 from asynctest import mock
-from aries_cloudagent.storage.error import StorageError, StorageNotFoundError
+from aries_cloudagent.storage.error import StorageError
 
 
 class AsyncMock(MagicMock):
@@ -25,7 +25,7 @@ class AsyncMock(MagicMock):
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.routes.ConnRecord")
+@mock.patch("didcomm_resolver.role.requester.routes.ConnRecord")
 async def test_connection(conRecord_mock):
     async_mock = AsyncMock()
     async_mock.metadata_get.return_value = {"methods": "test"}
@@ -51,7 +51,7 @@ async def test_connection(conRecord_mock):
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.routes.ConnRecord")
+@mock.patch("didcomm_resolver.role.requester.routes.ConnRecord")
 async def test_connection_fail(conRecord_mock):
     async_mock = AsyncMock()
     async_mock.metadata_get.return_value = {"methods": "test"}
@@ -78,7 +78,7 @@ async def test_connection_fail(conRecord_mock):
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.routes.ConnRecord")
+@mock.patch("didcomm_resolver.role.requester.routes.ConnRecord")
 async def test_send_and_wait_for_response(conRecord_mock):
     async_mock = AsyncMock()
     async_mock.metadata_get.return_value = {"methods": "test"}
@@ -98,7 +98,7 @@ async def test_send_and_wait_for_response(conRecord_mock):
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.routes.ConnRecord")
+@mock.patch("didcomm_resolver.role.requester.routes.ConnRecord")
 async def test_send_and_wait_for_response_fail(conRecord_mock):
     async def list_aux(*args, **kwargs):
         raise StorageError()
@@ -111,7 +111,7 @@ async def test_send_and_wait_for_response_fail(conRecord_mock):
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.routes.DIDCommResolver")
+@mock.patch("didcomm_resolver.role.requester.routes.DIDCommResolver")
 async def test_connection_register(DIDCommResolver_mock):
     async def aux(*args):
         return []
@@ -140,7 +140,7 @@ async def test_connection_register(DIDCommResolver_mock):
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.routes.DIDCommResolver")
+@mock.patch("didcomm_resolver.role.requester.routes.DIDCommResolver")
 async def test_connection_register_fail(DIDCommResolver_mock):
     async def aux(*args):
         raise BaseModelError()
@@ -168,7 +168,7 @@ async def test_connection_register_fail(DIDCommResolver_mock):
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.routes.DIDCommResolver")
+@mock.patch("didcomm_resolver.role.requester.routes.DIDCommResolver")
 async def test_connection_update(DIDCommResolver_mock):
     async def aux(*args):
         return []
@@ -197,7 +197,7 @@ async def test_connection_update(DIDCommResolver_mock):
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.routes.DIDCommResolver")
+@mock.patch("didcomm_resolver.role.requester.routes.DIDCommResolver")
 async def test_connection_update_fail(DIDCommResolver_mock):
     async def raise_exc(*args):
         raise BaseModelError()
@@ -225,7 +225,7 @@ async def test_connection_update_fail(DIDCommResolver_mock):
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.routes.DIDCommResolver")
+@mock.patch("didcomm_resolver.role.requester.routes.DIDCommResolver")
 async def test_remove_connection(DIDCommResolver_mock):
     async def aux(*args):
         return []
@@ -254,7 +254,7 @@ async def test_remove_connection(DIDCommResolver_mock):
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.routes.DIDCommResolver")
+@mock.patch("didcomm_resolver.role.requester.routes.DIDCommResolver")
 async def test_remove_connection_fail(DIDCommResolver_mock):
     async def aux(*args):
         raise BaseModelError()
