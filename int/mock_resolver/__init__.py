@@ -9,8 +9,6 @@ __all__ = ["MockResolver"]
 
 async def setup(context: InjectionContext):
     """Setup the mock resolver."""
-    print("FROM THE SETUP OF THE MOCK RESOLVER")
     registry = context.inject(DIDResolverRegistry)
     assert isinstance(registry, DIDResolverRegistry)
     registry.register(MockResolver())
-    print(registry.resolvers)
