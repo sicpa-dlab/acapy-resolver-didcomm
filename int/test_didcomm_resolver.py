@@ -9,6 +9,8 @@ from functools import wraps
 
 DID_KEY = "did:key:z6Mkfriq1MqLBoPWecGoDLjguo1sB9brj6wT3qZ5BxkKpuP6"
 DID_SOV = "did:sov:WRfXPg8dantKVubE3HX8pw"
+DID_GITHUB_MOCKED = "did:github:test"
+DID_GITHUB_MOCKED_FAIL = "did:github:fail"
 
 DID_DOC_SOV = {
     "@context": ["https://www.w3.org/ns/did/v1"],
@@ -278,14 +280,33 @@ def test_no_resolver_connection_returns_error(established_connection):
     assert not resp.ok
 
 
-@pytest.mark.skip(reason="Implementation not functional yet")
-def test_no_resolver_connection_returns_error(established_connection):
+def test_no_indy_ledger_resolver_connection_returns_error(established_connection):
     """Test resolution over DIDComm Connection."""
 
     resp = requests.get(f"http://requester:3001/resolver/resolve/{DID_SOV}")
+    assert not resp.ok
+    assert resp.status_code == 500
 
+
+def test_mocked_resolver_connection(established_connection):
+    """Test resolution over DIDComm Connection."""
+
+    resp = requests.get(f"http://requester:3001/resolver/resolve/{DID_GITHUB_MOCKED}")
     assert resp.ok
-    assert resp.json()["did_doc"] == DID_DOC_SOV
+    assert resp.json() == {
+        "@context": "https://www.w3.org/ns/did/v1",
+        "id": "did:github:test:mocked_id",
+    }
+
+
+def test_mocked_failed_resolver_connection(established_connection):
+    """Test resolution over DIDComm Connection."""
+
+    resp = requests.get(
+        f"http://requester:3001/resolver/resolve/{DID_GITHUB_MOCKED_FAIL}"
+    )
+    assert not resp.ok
+    assert resp.status_code == 404
 
 
 def test_register_method(established_connection):
