@@ -16,10 +16,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     volumes:
-      - "./acapy_resolver_mocked_github/__init__.py:/home/indy/aries-acapy-plugin-didcomm-resolver/didcomm_resolver/__init__.py"
-      - "./acapy_resolver_mocked_github/resolver_mock.py:/home/indy/aries-acapy-plugin-didcomm-resolver/didcomm_resolver/resolver_mock.py"
-
-    command: start --arg-file default.yml --plugin didcomm_resolver -e http://resolver:3000
+      - "./mock_resolver:/home/indy/mock_resolver:z"
+    command: start --arg-file default.yml --plugin didcomm_resolver.role.resolver --plugin mock_resolver -e http://resolver:3000 --log-level debug
 
   #*************************************************************
   # Requester: requests did resolution from resolver using     *
@@ -29,10 +27,10 @@ services:
   requester:
     image: didcomm-resolver-testing
     volumes:
-      - "./acapy_resolver_mocked_github/resolver_mock.py:/home/indy/aries-acapy-plugin-didcomm-resolver/didcomm_resolver/resolver_mock.py"
-      - "./acapy_resolver_mocked_github/__init__.py:/home/indy/aries-acapy-plugin-didcomm-resolver/didcomm_resolver/__init__.py"
-
-    command: start --arg-file default.yml --plugin didcomm_resolver -e http://requester:3000
+      - "./mock_resolver/resolver_config.yml:/home/indy/didcomm_resolver_config.yml:z"
+    environment:
+      - DIDCOMM_RESOLVER_CONFIG=/home/indy/didcomm_resolver_config.yml
+    command: start --arg-file default.yml --plugin didcomm_resolver.role.requester -e http://requester:3000 --log-level debug
 
   #*************************************************************
   # tester: drives tests for didcomm_resolver in a             *
