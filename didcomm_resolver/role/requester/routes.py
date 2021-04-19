@@ -18,10 +18,8 @@ from aries_cloudagent.connections.models.conn_record import ConnRecord
 from aries_cloudagent.messaging.models.base import BaseModelError
 from aries_cloudagent.messaging.models.openapi import OpenAPISchema
 from aries_cloudagent.messaging.valid import UUIDFour
-from aries_cloudagent.storage.base import BaseStorage
 from aries_cloudagent.storage.error import StorageError, StorageNotFoundError
-from aries_cloudagent.resolver import DIDResolverRegistry
-from .resolver import DIDCommResolver
+from ...resolver import DIDCommResolver
 
 DID_COMM_SPEC_URI = ""  # FIXME: PLS
 METADATA_KEY = DIDCommResolver.METADATA_KEY
@@ -56,8 +54,8 @@ class ConnectionRemoveResponseSchema(OpenAPISchema):
     fields.Str(description="Connection id of removed resolver.")
 
 
-class ConnectionListSchema(OpenAPISchema):
-    """Result schema for connection metadata."""
+class ConnectionIDListSchema(OpenAPISchema):
+    """Result schema for list of connection ids."""
 
     fields.List(
         fields.Str(description="connection id"),
@@ -65,11 +63,19 @@ class ConnectionListSchema(OpenAPISchema):
     )
 
 
+class ConnectionResolverMetadataSchema(OpenAPISchema):
+    """Result schema for resolver connection metadata."""
+
+    connection_id = fields.Str()
+    methods = fields.List(fields.Str())
+    state = fields.Str()
+
+
 @docs(
     tags=["resolver"],
     summary="get a list of resolver connections.",
 )
-@response_schema(ConnectionListSchema(), 200, description="")
+@response_schema(ConnectionIDListSchema(), 200, description="")
 async def connections(request: web.BaseRequest):
     """
     Request handler for listing resolver connections.
@@ -134,7 +140,7 @@ async def connections(request: web.BaseRequest):
     tags=["resolver"],
     summary="get resolver connection details.",
 )
-@response_schema(ConnectionListSchema(), 200, description="")
+@response_schema(ConnectionIDListSchema(), 200, description="")
 async def connection(request: web.BaseRequest):
     """
     Request handler for listing a single resolver connection.
@@ -175,7 +181,7 @@ async def connection_register(request: web.BaseRequest):
     session = await context.session()
     connection_id = request.match_info.get("conn_id")
     body = await request.json() if request.body_exists else {}
-    methods: Sequence[str] = body.get("methods", [""])
+    methods: Sequence[str] = body.get("methods", [])
     try:
         results = await DIDCommResolver.register_connection(
             session, connection_id, methods
@@ -196,7 +202,7 @@ async def connection_update(request: web.BaseRequest):
     session = await context.session()
     connection_id = request.match_info.get("conn_id")
     body = await request.json() if request.body_exists else {}
-    methods: Sequence[str] = body.get("methods", [""])
+    methods: Sequence[str] = body.get("methods", [])
     try:
         await DIDCommResolver.update_connection(session, connection_id, methods)
     except StorageNotFoundError as err:
@@ -255,8 +261,8 @@ def post_process_routes(app: web.Application):
         app._state["swagger_dict"]["tags"] = []
     app._state["swagger_dict"]["tags"].append(
         {
-            "name": "connection",
-            "description": "Connection management",
+            "name": "resolver-connection",
+            "description": "Resolver Connection Manager",
             "externalDocs": {"description": "Specification", "url": DID_COMM_SPEC_URI},
         }
     )

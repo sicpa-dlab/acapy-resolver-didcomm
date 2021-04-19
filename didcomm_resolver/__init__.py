@@ -1,13 +1,18 @@
 """DIDCOMM Universal Resolver Plugin for ACA-Py"""
 
-from aries_cloudagent.config.injection_context import InjectionContext
-from aries_cloudagent.resolver.did_resolver_registry import DIDResolverRegistry
-from .resolver import DIDCommResolver
+import logging
 
-__all__ = ["DIDCommResolver"]
+from aries_cloudagent.config.injection_context import InjectionContext
+
+LOGGER = logging.getLogger(__name__)
 
 
 async def setup(context: InjectionContext):
     """Setup the plugin."""
-    registry = context.inject(DIDResolverRegistry)
-    registry.register(DIDCommResolver())
+
+    LOGGER.error(
+        """You must select a role. If you intend only to act as a
+resolver over DIDComm, use didcomm_resolver.role.resolver.
+If you intend only to resovle through a remote resolver over
+DIDComm, use didcomm_resolver.role.requester."""
+    )
