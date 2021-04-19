@@ -11,7 +11,8 @@ from didcomm_resolver.routes import (
     connection_register,
     connection_remove,
     register,
-    post_process_routes, connection_update,
+    post_process_routes,
+    connection_update,
 )
 import pytest
 from asynctest import mock
@@ -40,7 +41,6 @@ async def test_connection(conRecord_mock):
     context_magic.session.side_effect = AsyncMock()
     request = web.BaseRequest
     request.match_info = {"conn_id": "mocked_id"}
-    #{"context": context_magic}
 
     request = MagicMock()
     request["context"].session.side_effect = list_aux
@@ -77,7 +77,6 @@ async def test_connection_fail(conRecord_mock):
         await connection(request)
 
 
-
 @pytest.mark.asyncio
 @mock.patch("didcomm_resolver.routes.ConnRecord")
 async def test_send_and_wait_for_response(conRecord_mock):
@@ -104,7 +103,6 @@ async def test_send_and_wait_for_response_fail(conRecord_mock):
     async def list_aux(*args, **kwargs):
         raise StorageError()
 
-
     conRecord_mock.retrieve_by_id.side_effect = StorageError
     conRecord_mock.query.side_effect = list_aux
 
@@ -115,9 +113,9 @@ async def test_send_and_wait_for_response_fail(conRecord_mock):
 @pytest.mark.asyncio
 @mock.patch("didcomm_resolver.routes.DIDCommResolver")
 async def test_connection_register(DIDCommResolver_mock):
-
     async def aux(*args):
         return []
+
     DIDCommResolver_mock.register_connection.side_effect = aux
     async_mock = AsyncMock()
     async_mock.session.return_value = MagicMock()
@@ -140,12 +138,13 @@ async def test_connection_register(DIDCommResolver_mock):
     assert result.reason == "OK"
     assert result.status == 200
 
+
 @pytest.mark.asyncio
 @mock.patch("didcomm_resolver.routes.DIDCommResolver")
 async def test_connection_register_fail(DIDCommResolver_mock):
-
     async def aux(*args):
         raise BaseModelError()
+
     DIDCommResolver_mock.register_connection.side_effect = aux
     async_mock = AsyncMock()
     async_mock.session.return_value = MagicMock()
@@ -171,7 +170,6 @@ async def test_connection_register_fail(DIDCommResolver_mock):
 @pytest.mark.asyncio
 @mock.patch("didcomm_resolver.routes.DIDCommResolver")
 async def test_connection_update(DIDCommResolver_mock):
-
     async def aux(*args):
         return []
 
@@ -201,7 +199,6 @@ async def test_connection_update(DIDCommResolver_mock):
 @pytest.mark.asyncio
 @mock.patch("didcomm_resolver.routes.DIDCommResolver")
 async def test_connection_update_fail(DIDCommResolver_mock):
-
     async def raise_exc(*args):
         raise BaseModelError()
 
@@ -230,7 +227,6 @@ async def test_connection_update_fail(DIDCommResolver_mock):
 @pytest.mark.asyncio
 @mock.patch("didcomm_resolver.routes.DIDCommResolver")
 async def test_remove_connection(DIDCommResolver_mock):
-
     async def aux(*args):
         return []
 
@@ -260,7 +256,6 @@ async def test_remove_connection(DIDCommResolver_mock):
 @pytest.mark.asyncio
 @mock.patch("didcomm_resolver.routes.DIDCommResolver")
 async def test_remove_connection_fail(DIDCommResolver_mock):
-
     async def aux(*args):
         raise BaseModelError()
 
