@@ -1,5 +1,6 @@
 """Didcommm Universal DID Resolver."""
 
+import asyncio
 import logging
 import json
 import os
@@ -151,18 +152,32 @@ class DIDCommResolver(BaseDIDResolver):
                 # Construct Resolve DID message
                 resolve_did_message = ResolveDID(did=did)
 
+                LOGGER.debug(
+                    "Sending resolve request to %s: %s", conn_id, resolve_did_message
+                )
+
                 try:
-                    response = await send_and_wait_for_response(
-                        message=resolve_did_message,
-                        response_type=ResolveDIDResult,
-                        responder=responder,
-                        connection_id=conn_id,
+                    response: ResolveDIDResult = await asyncio.wait_for(  # type: ignore
+                        send_and_wait_for_response(
+                            message=resolve_did_message,
+                            response_type=ResolveDIDResult,
+                            responder=responder,
+                            connection_id=conn_id,
+                        ),
+                        timeout=30,
                     )
                     result = response.did_document
                     if not isinstance(result, dict):
                         result = json.loads(result)
                     return result
                 except DIDNotFound:
+                    LOGGER.exception(
+                        "Connection %s could not find DID %s", conn_id, did
+                    )
+                    not_found_conn_ids.append(conn_id)
+                    continue
+                except asyncio.TimeoutError:
+                    LOGGER.exception("Querying %s for DID %s timed out", conn_id, did)
                     not_found_conn_ids.append(conn_id)
                     continue
 
