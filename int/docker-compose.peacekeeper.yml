@@ -1,0 +1,55 @@
+version: '3'
+#***************************************************************
+# integration level test agents                                *
+#***************************************************************
+
+services:
+  #*************************************************************
+  # Resolver: accepts didcomm did-resolve messages, makes http *
+  # calls to resolvers to resolve dids, and sends results to   *
+  # requesting agent using didcomm messages.                   *
+  #*************************************************************
+
+  resolver:
+    image: didcomm-resolver
+    build:
+      context: ..
+      dockerfile: int/unires/Dockerfile
+    command: start --arg-file default.yml -e http://resolver:3000 --log-level debug
+
+  #*************************************************************
+  # Requester: requests did resolution from resolver using     *
+  # didcomm messages.                                          *
+  #*************************************************************
+
+  requester:
+    image: didcomm-requester
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - "./mock_resolver/resolver_config.yml:/home/indy/didcomm_resolver_config.yml:z"
+    environment:
+      - DIDCOMM_RESOLVER_CONFIG=/home/indy/didcomm_resolver_config.yml
+    command: start --arg-file default.yml --plugin didcomm_resolver.role.requester -e http://requester:3000 --log-level debug
+
+  #*************************************************************
+  # tester: drives tests for didcomm_resolver in a             *
+  # "Juggernaut" fashion!                                      *
+  #*************************************************************
+
+  tests:
+      container_name: juggernaut
+      build:
+        context: .
+        dockerfile: Dockerfile.test.runner
+      environment:
+        - WAIT_BEFORE_HOSTS=3
+        - WAIT_HOSTS=requester:3000, resolver:3000
+        - WAIT_HOSTS_TIMEOUT=60
+        - WAIT_SLEEP_INTERVAL=1
+        - WAIT_HOST_CONNECT_TIMEOUT=30
+      depends_on:
+        - resolver
+        - requester
+      command: sh -c "/wait && pytest -v"
