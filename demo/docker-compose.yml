@@ -16,7 +16,7 @@ services:
       - "3001:3001"
     command: start --arg-file default.yml --plugin didcomm_resolver.role.requester -e http://requester:3000 --log-level debug
 
-  tests:
+  demo:
       container_name: juggernaut
       build:
         context: ../int
