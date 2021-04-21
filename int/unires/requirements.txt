@@ -1,0 +1,1 @@
+aries-cloudagent@git+https://github.com/dbluhm/universal-resolver-didcomm@fix/plugin-interop
