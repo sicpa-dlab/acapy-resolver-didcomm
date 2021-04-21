@@ -6,9 +6,8 @@ import pytest
 import requests
 
 from . import Agent, REQUESTER, RESOLVER
-import json
 
-from .jsonld_examples import JSONLD_LIST
+from .jsonld_examples import JSONLD_LIST, JSONLD_FAIL_TO_RESOLVE
 
 
 @pytest.fixture(scope="session")
@@ -87,7 +86,6 @@ def test_json_ld_sign():
 def test_json_ld_verify(jsonld):
     """ Verify sign for json ld"""
     # TODO: Implement when route is available
-
     body = {"doc": jsonld}
 
     resp = requests.post("http://requester:3001/jsonld/verify", json=body)
@@ -95,6 +93,14 @@ def test_json_ld_verify(jsonld):
     assert resp.json() == {"valid": True}
 
 
+@pytest.mark.skip(reason="Implementation not functional yet")
+def test_fail_json_ld_verify_due_resolver():
+    """ Verify sign for json ld"""
+    # TODO: Implement when route is available
+    body = {"doc": JSONLD_FAIL_TO_RESOLVE}
+
+    resp = requests.post("http://requester:3001/jsonld/verify", json=body)
+    assert not resp.ok
 
 
 

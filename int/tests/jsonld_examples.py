@@ -43,50 +43,6 @@ jsonld0 = {
 jsonld1 = {
   "@context": [
     "https://www.w3.org/2018/credentials/v1",
-    "https://w3id.org/vaccination/v1"
-  ],
-  "type": [
-    "VerifiableCredential",
-    "VaccinationCertificate"
-  ],
-  "issuer": "did:ion:test:EiDK64JpR4Zi4GYWLA6Ssesfl7-oJxJ50UoOcntFnbypog",
-  "issuanceDate": "2021-04-20T21:22:35Z",
-  "credentialSubject": {
-    "type": "VaccinationEvent",
-    "id": "did:key:z6Mkj9HNpWxoS1yC3XcNthsir4NLCmVUt6HRGHUCARCij649",
-    "batchNumber": "1183738569",
-    "administeringCentre": "MoH",
-    "healthProfessional": "MoH",
-    "countryOfVaccination": "FR",
-    "recipient": {
-      "type": "VaccineRecipient",
-      "givenName": "JOHN",
-      "familyName": "SMITH",
-      "gender": "Male",
-      "birthDate": "1958-07-17"
-    },
-    "vaccine": {
-      "type": "Vaccine",
-      "disease": "COVID-19",
-      "atcCode": "J07BX03",
-      "medicinalProductName": "COVID-19 Vaccine Moderna",
-      "marketingAuthorizationHolder": "Moderna Biotech"
-    }
-  },
-  "name": "COVID-19 Vaccination Certificate",
-  "description": "COVID-19 Vaccination Certificate",
-  "proof": {
-    "type": "EcdsaSecp256k1Signature2019",
-    "created": "2021-04-20T21:22:35Z",
-    "proofPurpose": "assertionMethod",
-    "verificationMethod": "did:ion:test:EiDK64JpR4Zi4GYWLA6Ssesfl7-oJxJ50UoOcntFnbypog#signingKey",
-    "jws": "eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdLCJhbGciOiJFUzI1NksifQ..MEUCIQCnMFXy_ggy9v-aR23XVDqrjq3cbmremTOHsrQynxizagIgK1n9FNoMdAxskRGNtzqTf-5nGdpP1QHP3zmdcI52msE"
-  }
-}
-
-jsonld2 = {
-  "@context": [
-    "https://www.w3.org/2018/credentials/v1",
     "https://www.w3.org/2018/credentials/examples/v1"
   ],
   "id": "http://example.gov/credentials/3732",
@@ -109,7 +65,7 @@ jsonld2 = {
   }
 }
 
-jsonld3 = {
+jsonld2 = {
   "@context": [
     "https://www.w3.org/2018/credentials/v1",
     "https://w3c-ccg.github.io/vc-examples/cmtr/examples/v0.2/cmtr-v0.2.jsonld"
@@ -320,4 +276,48 @@ jsonld3 = {
   }
 }
 
-JSONLD_LIST = [jsonld0, jsonld1, jsonld2, jsonld3]
+JSONLD_FAIL_TO_RESOLVE = {
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://w3id.org/vaccination/v1"
+  ],
+  "type": [
+    "VerifiableCredential",
+    "VaccinationCertificate"
+  ],
+  "issuer": "did:ion:test:EiDK64JpR4Zi4GYWLA6Ssesfl7-oJxJ50UoOcntFnbypog",
+  "issuanceDate": "2021-04-20T21:22:35Z",
+  "credentialSubject": {
+    "type": "VaccinationEvent",
+    "id": "did:key:z6Mkj9HNpWxoS1yC3XcNthsir4NLCmVUt6HRGHUCARCij649",
+    "batchNumber": "1183738569",
+    "administeringCentre": "MoH",
+    "healthProfessional": "MoH",
+    "countryOfVaccination": "FR",
+    "recipient": {
+      "type": "VaccineRecipient",
+      "givenName": "JOHN",
+      "familyName": "SMITH",
+      "gender": "Male",
+      "birthDate": "1958-07-17"
+    },
+    "vaccine": {
+      "type": "Vaccine",
+      "disease": "COVID-19",
+      "atcCode": "J07BX03",
+      "medicinalProductName": "COVID-19 Vaccine Moderna",
+      "marketingAuthorizationHolder": "Moderna Biotech"
+    }
+  },
+  "name": "COVID-19 Vaccination Certificate",
+  "description": "COVID-19 Vaccination Certificate",
+  "proof": {
+    "type": "EcdsaSecp256k1Signature2019",
+    "created": "2021-04-20T21:22:35Z",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:ion:test:EiDK64JpR4Zi4GYWLA6Ssesfl7-oJxJ50UoOcntFnbypog#signingKey",
+    "jws": "eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdLCJhbGciOiJFUzI1NksifQ..MEUCIQCnMFXy_ggy9v-aR23XVDqrjq3cbmremTOHsrQynxizagIgK1n9FNoMdAxskRGNtzqTf-5nGdpP1QHP3zmdcI52msE"
+  }
+}
+
+JSONLD_LIST = [jsonld0, jsonld1, jsonld2]
