@@ -1,47 +1,25 @@
 version: '3'
-#***************************************************************
-# integration level test agents                                *
-#***************************************************************
-
 services:
-  #*************************************************************
-  # Resolver: accepts didcomm did-resolve messages, makes http *
-  # calls to resolvers to resolve dids, and sends results to   *
-  # requesting agent using didcomm messages.                   *
-  #*************************************************************
-
   resolver:
-    image: didcomm-resolver
+    image: universal-resolver
     build:
-      context: ..
-      dockerfile: int/unires/Dockerfile
-    command: start --arg-file default.yml -e http://resolver:3000 --log-level debug
-
-  #*************************************************************
-  # Requester: requests did resolution from resolver using     *
-  # didcomm messages.                                          *
-  #*************************************************************
+      context: ./uniresolver
+      dockerfile: Dockerfile
+    command: start --arg-file config.yml -e http://resolver:8180 --log-level debug
 
   requester:
     image: didcomm-requester
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    volumes:
-      - "./unires/resolver_config.yml:/home/indy/didcomm_resolver_config.yml:z"
-    environment:
-      - DIDCOMM_RESOLVER_CONFIG=/home/indy/didcomm_resolver_config.yml
+    ports:
+      - "3001:3001"
     command: start --arg-file default.yml --plugin didcomm_resolver.role.requester -e http://requester:3000 --log-level debug
-
-  #*************************************************************
-  # tester: drives tests for didcomm_resolver in a             *
-  # "Juggernaut" fashion!                                      *
-  #*************************************************************
 
   tests:
       container_name: juggernaut
       build:
-        context: .
+        context: ../int
         dockerfile: Dockerfile.test.runner
       environment:
         - WAIT_BEFORE_HOSTS=3
