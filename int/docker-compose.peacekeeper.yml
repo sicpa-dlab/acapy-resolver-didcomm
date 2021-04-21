@@ -28,7 +28,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     volumes:
-      - "./mock_resolver/resolver_config.yml:/home/indy/didcomm_resolver_config.yml:z"
+      - "./unires/resolver_config.yml:/home/indy/didcomm_resolver_config.yml:z"
     environment:
       - DIDCOMM_RESOLVER_CONFIG=/home/indy/didcomm_resolver_config.yml
     command: start --arg-file default.yml --plugin didcomm_resolver.role.requester -e http://requester:3000 --log-level debug
