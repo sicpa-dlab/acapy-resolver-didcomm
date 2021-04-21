@@ -41,7 +41,7 @@ def test_no_indy_ledger_resolver_connection_returns_error():
 
     resp = requests.get(f"http://requester:3001/resolver/resolve/{DID_SOV}")
     assert not resp.ok
-    assert resp.status_code == 500
+    assert resp.status_code == 501
 
 
 def test_mocked_resolver_connection(established_connection, requester: Agent):
