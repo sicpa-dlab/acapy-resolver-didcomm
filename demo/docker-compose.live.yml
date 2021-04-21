@@ -1,0 +1,23 @@
+version: '3'
+services:
+  ngrok:
+    image: wernight/ngrok
+    command: ngrok http agent:3000 --log stdout
+
+  requester:
+    image: didcomm-requester-with-ngrok
+    build:
+      context: ..
+      dockerfile: ./demo/Dockerfile.ngrok
+    environment:
+      - NGROK_NAME=ngrok
+    depends_on:
+      - ngrok
+    command: aca-py start --arg-file default.yml --plugin didcomm_resolver.role.requester --log-level debug --invite
+
+  demo:
+    environment:
+      - REQUESTER=http://requester:3001
+      - RESOLVER_INVITE="http://didcomm.uniresolver.io:8180/?oob=eyJAdHlwZSI6ICJodHRwczovL2RpZGNvbW0ub3JnL291dC1vZi1iYW5kLzEuMC9pbnZpdGF0aW9uIiwgIkBpZCI6ICJhOWVkZjBkYy0wNjlkLTQ2NDAtYTExYS0zZjVhODFiZWEzZWQiLCAiaGFuZHNoYWtlX3Byb3RvY29scyI6IFsiaHR0cHM6Ly9kaWRjb21tLm9yZy9kaWRleGNoYW5nZS92MS4wIl0sICJsYWJlbCI6ICJkaWQtcmVzb2x1dGlvbiIsICJzZXJ2aWNlIjogW3siaWQiOiAiI2lubGluZSIsICJ0eXBlIjogImRpZC1jb21tdW5pY2F0aW9uIiwgInJlY2lwaWVudEtleXMiOiBbImRpZDprZXk6ejZNa2lnZHNxbURhdXpEbUp4RDRvWkZydVZydVNxb2ZlUFJObzdkTmdFaWo5ZHJwIl0sICJzZXJ2aWNlRW5kcG9pbnQiOiAiaHR0cDovL2RpZGNvbW0udW5pcmVzb2x2ZXIuaW86ODE4MCJ9XX0="
+    depends_on:
+      - requester

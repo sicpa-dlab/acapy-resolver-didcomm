@@ -5,6 +5,7 @@ WORKDIR /usr/src/app/
 COPY __init__.py runner/
 COPY __main__.py runner/
 COPY requirements.txt runner/
+COPY inputs runner/inputs
 RUN pip3 install --no-cache-dir -r runner/requirements.txt
 
 # Add docker-compose-wait tool -------------------

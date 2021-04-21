@@ -36,7 +36,7 @@ def unwrap_json_response(func):
     """Unwrap a requests response object to json."""
 
     @wraps(func)
-    def _wrapper(*args, **kwargs):
+    def _wrapper(*args, **kwargs) -> dict:
         response = func(*args, **kwargs)
         return response.json()
 
