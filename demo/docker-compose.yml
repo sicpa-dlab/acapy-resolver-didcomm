@@ -19,15 +19,14 @@ services:
   demo:
       container_name: juggernaut
       build:
-        context: ../int
-        dockerfile: Dockerfile.test.runner
+        context: runner
+        dockerfile: Dockerfile
       environment:
         - WAIT_BEFORE_HOSTS=3
-        - WAIT_HOSTS=requester:3000, resolver:3000
+        - WAIT_HOSTS=requester:3000
         - WAIT_HOSTS_TIMEOUT=60
         - WAIT_SLEEP_INTERVAL=1
         - WAIT_HOST_CONNECT_TIMEOUT=30
       depends_on:
         - resolver
         - requester
-      command: sh -c "/wait && pytest -v"
