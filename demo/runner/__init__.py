@@ -1,6 +1,7 @@
 """Universal Resolver DIDComm + Resolver Plugin Demo."""
 
 from functools import wraps
+from typing import List
 
 import requests
 
@@ -90,6 +91,19 @@ class Agent:
             f"/connections/{connection_id}/metadata",
             json={"metadata": metadata},
         )
+
+    @raise_if_not_ok("Failed to register resovler connection")
+    def register_resolver_connection(self, conn_id: str, methods: List[str]):
+        """Register resolver connection."""
+        return post(
+            self.url, f"/resolver/register/{conn_id}", json={"methods": methods}
+        )
+
+    @unwrap_json_response
+    @raise_if_not_ok("Failed to resolve DID")
+    def resolve(self, did: str):
+        """Resolve a DID."""
+        return get(self.url, f"/resolver/resolve/{did}")
 
     def get(self, path: str, return_json: bool = True, fail_with: str = None, **kwargs):
         """Do get to agent endpoint."""

@@ -1,12 +1,13 @@
 """Run Universal Resolver DIDComm + Resolver Plugin Demo."""
 
 import json
+import time
+from typing import Tuple
 from . import Agent
 
 
-def main():
-    """Run the demo."""
-
+def setup() -> Tuple[Agent, dict]:
+    """Do agent setup."""
     requester_url = input("Enter the requester URL: ")
     resolver_invite_str = input("Enter the resolver invitation json: ")
     resolver_invite_json = json.loads(resolver_invite_str)
@@ -20,7 +21,20 @@ def main():
 
     requester = Agent(requester_url)
     conn = requester.receive_invite(resolver_invite_json)
-    print(conn)
+    time.sleep(1)
+    return requester, conn  # type: ignore
+
+
+def main():
+    """Run the demo."""
+    requester, connection = setup()
+
+    requester.register_resolver_connection(
+        conn_id=connection["connection_id"],
+        methods=["github", "ethr", "btcr", "v1", "ion", "key", "elem"],
+    )
+
+    print(requester.resolve("did:github:dbluhm"))
 
 
 if __name__ == "__main__":

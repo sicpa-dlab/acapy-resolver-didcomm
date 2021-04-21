@@ -9,7 +9,7 @@ repository="https://github.com/sicpa-dlab/aries-acapy-plugin-didcomm-resolver"
 
 [tool.poetry.dependencies]
 python = "^3.6.9"
-aries-cloudagent = {git = "https://github.com/hyperledger/aries-cloudagent-python", rev = "main"}
+aries-cloudagent = {git = "https://github.com/dbluhm/aries-cloudagent-python", rev = "fix/resolution-and-json-ld-routes"}
 aiohttp = "~=3.6.3"
 pydid = "~=0.2.3"
 aioredis = "~=1.3.1"
