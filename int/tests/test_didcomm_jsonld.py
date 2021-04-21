@@ -6,6 +6,9 @@ import pytest
 import requests
 
 from . import Agent, REQUESTER, RESOLVER
+import json
+
+from .jsonld_examples import JSONLD_LIST
 
 
 @pytest.fixture(scope="session")
@@ -80,41 +83,18 @@ def test_json_ld_sign():
 
 
 @pytest.mark.skip(reason="Implementation not functional yet")
-def test_json_ld_verify():
+@pytest.mark.parametrize("jsonld", JSONLD_LIST)
+def test_json_ld_verify(jsonld):
     """ Verify sign for json ld"""
     # TODO: Implement when route is available
 
-    body = {
-        "verkey": "5yKdnU7ToTjAoRNDzfuzVTfWBH38qyhE1b9xh4v8JaWF",
-        "doc": {
-            "@context": [
-                "https://www.w3.org/2018/credentials/v1",
-                "https://www.w3.org/2018/credentials/examples/v1",
-            ],
-            "id": "http://example.gov/credentials/3732",
-            "type": ["VerifiableCredential", "UniversityDegreeCredential"],
-            "issuer": "did:key:z6MkjRagNiMu91DduvCvgEsqLZDVzrJzFrwahc4tXLt9DoHd",
-            "issuanceDate": "2020-03-10T04:24:12.164Z",
-            "credentialSubject": {
-                "id": "did:key:z6MkjRagNiMu91DduvCvgEsqLZDVzrJzFrwahc4tXLt9DoHd",
-                "degree": {
-                    "type": "BachelorDegree",
-                    "name": "Bachelor of Science and Arts",
-                },
-            },
-            "proof": {
-                "type": "Ed25519Signature2018",
-                "created": "2020-04-10T21:35:35Z",
-                "verificationMethod": "did:key:z6MkjRagNiMu91DduvCvgEsqLZDVzrJz"
-                "Frwahc4tXLt9DoHd#z6MkjRagNiMu91DduvCvgEsqLZDVzrJzFrwahc4tXLt9DoHd",
-                "proofPurpose": "assertionMethod",
-                "jws": "eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19.."
-                "l9d0YHjcFAH2H4dB9xlWFZQLUpixVCWJk0eOt4CXQe1NXKWZwmhmn9OQp6YxX0"
-                "a2LffegtYESTCJEoGVXLqWAA",
-            },
-        },
-    }
+    body = {"doc": jsonld}
 
     resp = requests.post("http://requester:3001/jsonld/verify", json=body)
     assert resp.ok
     assert resp.json() == {"valid": True}
+
+
+
+
+
