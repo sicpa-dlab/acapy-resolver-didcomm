@@ -27,6 +27,7 @@ services:
       - WAIT_HOSTS_TIMEOUT=60
       - WAIT_SLEEP_INTERVAL=1
       - WAIT_HOST_CONNECT_TIMEOUT=30
+      - REQUESTER=http://requester:3001
     depends_on:
       - resolver
       - requester

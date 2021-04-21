@@ -3,6 +3,18 @@
 ## Local instance of universal resolver agent
 
 ```sh
+$ docker-compose up -d resolver
+```
+
+Check the logs to copy the resolver invitation:
+
+```sh
+$ docker-compose logs resolver
+```
+
+Run the demo and paste in invite when prompted:
+
+```sh
 $ docker-compose run demo
 ```
 
