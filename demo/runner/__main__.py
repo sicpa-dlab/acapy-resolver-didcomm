@@ -70,15 +70,15 @@ def setup() -> Tuple[Agent, dict]:
     return requester, conn
 
 
-Inputs = namedtuple("Input", ("dids", "vcs"))
+Inputs = namedtuple("Input", ("dids", "vcs", "methods"))
 
 
 def get_inputs() -> Inputs:
     """Load inputs for demo."""
-    return Inputs(
-        json.load(open("runner/inputs/dids.json")),
-        json.load(open("runner/inputs/vcs.json")),
-    )
+    with open("runner/inputs.json") as inputs_file:
+        inputs = json.load(inputs_file)
+
+    return Inputs(inputs["dids"], inputs["vcs"], inputs["methods"])
 
 
 def resolve(requester: Agent, did: str):
@@ -86,8 +86,8 @@ def resolve(requester: Agent, did: str):
     info(f"Resolving: {did}")
     try:
         result = requester.resolve(did)
-    except Exception:
-        fail(f"Failed to resolve {did}")
+    except Exception as error:
+        fail(f"Failed to resolve {did}: {error}")
     else:
         success("Resolved document:")
         print(json.dumps(result, indent=2))
@@ -117,16 +117,15 @@ def jsonld_verify(requester, vc: dict):
 def main():
     """Run the demo."""
     requester, connection = setup()
-    methods = ["github", "ethr", "btcr", "v1", "ion", "key", "elem"]
+    inputs = get_inputs()
 
     info("Registering connection to Resolver as a resolver connection...")
-    print(f"Using methods {methods}")
+    print(f"Using methods {inputs.methods}")
     requester.register_resolver_connection(
-        conn_id=connection["connection_id"], methods=methods
+        conn_id=connection["connection_id"], methods=inputs.methods
     )
     success("Connection registered.")
 
-    inputs = get_inputs()
     for did in inputs.dids:
         resolve(requester, did)
         cont()
