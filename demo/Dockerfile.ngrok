@@ -7,6 +7,13 @@ RUN poetry config virtualenvs.create false
 RUN ln -s $(pyenv prefix)/lib/python3.6/site-packages site-packages
 
 USER root
+# Waiting for endpoint
+ADD demo/ngrok-wait.sh ngrok-wait.sh
+RUN chmod +x ngrok-wait.sh
+ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 ./jq
+RUN chmod +x ./jq
+
+# Resolver plugin setup
 COPY ./didcomm_resolver aries-acapy-plugin-didcomm-resolver/didcomm_resolver
 COPY ./README.md aries-acapy-plugin-didcomm-resolver
 COPY ./setup.py aries-acapy-plugin-didcomm-resolver
@@ -20,5 +27,5 @@ RUN cd aries-acapy-plugin-didcomm-resolver; poetry install --no-dev
 # Force install of hyperledger/main until a release
 RUN pip3 install -I git+https://github.com/hyperledger/aries-cloudagent-python@main
 
-ENTRYPOINT ["/bin/bash", "-c", "aca-py \"$@\"", "--"]
-CMD ["start", "--arg-file", "default.yml"]
+ENTRYPOINT ["/bin/bash", "-c", "./ngrok-wait.sh \"$@\"", "--"]
+CMD ["aca-py", "start", "--arg-file", "default.yml"]

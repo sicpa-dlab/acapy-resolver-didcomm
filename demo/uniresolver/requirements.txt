@@ -1,0 +1,1 @@
+aries-cloudagent@git+https://github.com/danubetech/universal-resolver-didcomm@main
