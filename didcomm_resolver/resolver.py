@@ -24,7 +24,6 @@ import yaml
 from .acapy_tools.awaitable_handler import send_and_wait_for_response
 from .protocol.v0_9 import ResolveDID, ResolveDIDResult
 
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -83,12 +82,7 @@ class DIDCommResolver(BaseDIDResolver):
         methods: Sequence[str],
     ):
         """Register connection as a resolver connection."""
-        conn_record = await ConnRecord.retrieve_by_id(session, connection_id)
-        conn_record = cast(ConnRecord, conn_record)
-        await conn_record.metadata_set(
-            session, cls.METADATA_KEY, {cls.METADATA_METHODS: methods}
-        )
-        return await conn_record.metadata_get_all(session)
+        return await cls._upsert_methods(session, connection_id, methods)
 
     @classmethod
     async def update_connection(
@@ -98,7 +92,32 @@ class DIDCommResolver(BaseDIDResolver):
         methods: Sequence[str],
     ):
         """Update resolvers supported methods."""
-        return await cls.register_connection(session, connection_id, methods)
+        return await cls._upsert_methods(session, connection_id, methods, update=True)
+
+    @classmethod
+    async def _upsert_methods(cls, session, connection_id, methods, update=False):
+
+        # Remove possible duplicates methods in the request
+        methods = list(dict.fromkeys(methods))
+
+        conn_record = await ConnRecord.retrieve_by_id(session, connection_id)
+        conn_record = cast(ConnRecord, conn_record)
+
+        if not update:
+            conn_record_metadata = await conn_record.metadata_get(
+                session, cls.METADATA_KEY
+            )
+
+            if conn_record_metadata:
+                current_methods = conn_record_metadata.get(cls.METADATA_METHODS)
+                methods.extend(current_methods)
+                # Remove duplicates if there is between methods and current methods
+                methods = list(dict.fromkeys(methods))
+
+        await conn_record.metadata_set(
+            session, cls.METADATA_KEY, {cls.METADATA_METHODS: methods}
+        )
+        return await conn_record.metadata_get_all(session)
 
     @classmethod
     async def remove_connection(
