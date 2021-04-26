@@ -10,6 +10,7 @@ import requests
 
 from . import Agent, REQUESTER, RESOLVER, DID_MOCK, DID_KEY, DID_SOV, DID_MOCK_FAIL
 
+
 @pytest.fixture(scope="session")
 def requester():
     """requester agent fixture."""
@@ -28,6 +29,7 @@ def established_connection(resolver, requester):
     invite = resolver.create_invitation(auto_accept="true")["invitation"]
     resp = requester.receive_invite(invite, auto_accept="true")
     yield resp["connection_id"]
+
 
 def test_mocked_resolver_connection(established_connection, requester: Agent):
     """Test resolution over DIDComm Connection."""
