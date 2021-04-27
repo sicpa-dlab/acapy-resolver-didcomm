@@ -72,8 +72,8 @@ class ConnectionResolverMetadataSchema(OpenAPISchema):
 
 
 @docs(
-    tags=["resolver"],
-    summary="get a list of resolver connections.",
+    tags=["didcomm-resolver"],
+    summary="List DIDcomm resolvers.",
 )
 @response_schema(ConnectionIDListSchema(), 200, description="")
 async def connections(request: web.BaseRequest):
@@ -137,13 +137,13 @@ async def connections(request: web.BaseRequest):
 
 
 @docs(
-    tags=["resolver"],
-    summary="get resolver connection details.",
+    tags=["didcomm-resolver"],
+    summary="Fetch DIDComm Resolver details.",
 )
 @response_schema(ConnectionIDListSchema(), 200, description="")
 async def connection(request: web.BaseRequest):
     """
-    Request handler for listing a single resolver connection.
+    Request handler for listing a single DIDcomm resolver.
 
     Args:
         request: aiohttp request object
@@ -172,11 +172,21 @@ async def connection(request: web.BaseRequest):
     return web.json_response(resolver)
 
 
-@docs(tags=["resolver"], summary="Register connection as a new resolver.")
+@docs(tags=["didcomm-resolver"], summary="Register DIDcomm resolver.")
 @match_info_schema(ConnIdMatchInfoSchema())
 @request_schema(ConnectionRegisterRequestSchema())
 @response_schema(ConnectionRegisterResultSchema(), 200, description="")
 async def connection_register(request: web.BaseRequest):
+    """
+    Request handler for registering a connection as a DIDcomm resolver.
+
+    Args:
+        request: aiohttp request object
+
+    Returns:
+        The connection list response
+
+    """
     context: AdminRequestContext = request["context"]
     session = await context.session()
     connection_id = request.match_info.get("conn_id")
@@ -193,11 +203,21 @@ async def connection_register(request: web.BaseRequest):
     return web.json_response({"results": results})
 
 
-@docs(tags=["resolver"], summary="Update connection methods that are resolvable.")
+@docs(tags=["didcomm-resolver"], summary="Update DIDcomm resolvable methods.")
 @match_info_schema(ConnIdMatchInfoSchema())
 @request_schema(ConnectionRegisterRequestSchema())
 @response_schema(ConnectionRegisterResultSchema(), 200, description="")
 async def connection_update(request: web.BaseRequest):
+    """
+    Request handler for updating a DIDcomm resolver.
+
+    Args:
+        request: aiohttp request object
+
+    Returns:
+        The connection list response
+
+    """
     context: AdminRequestContext = request["context"]
     session = await context.session()
     connection_id = request.match_info.get("conn_id")
@@ -212,12 +232,12 @@ async def connection_update(request: web.BaseRequest):
     return web.json_response({"results": "Ok"})
 
 
-@docs(tags=["connection"], summary="Remove an existing connection record")
+@docs(tags=["didcomm-resolver"], summary="Remove an existing connection record.")
 @match_info_schema(ConnIdMatchInfoSchema())
 @response_schema(ConnectionRemoveResponseSchema, 200, description="")
 async def connection_remove(request: web.BaseRequest):
     """
-    Request handler for removing a connection record.
+    Request handler for removing a DIDcomm resolver.
 
     Args:
         request: aiohttp request object
@@ -261,7 +281,7 @@ def post_process_routes(app: web.Application):
         app._state["swagger_dict"]["tags"] = []
     app._state["swagger_dict"]["tags"].append(
         {
-            "name": "resolver-connection",
+            "name": "DIDcomm-resolver",
             "description": "Resolver Connection Manager",
             "externalDocs": {"description": "Specification", "url": DID_COMM_SPEC_URI},
         }

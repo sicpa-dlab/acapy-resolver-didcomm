@@ -101,6 +101,3 @@ def test_fail_json_ld_verify_due_resolver():
 
     resp = requests.post("http://requester:3001/jsonld/verify", json=body)
     assert not resp.ok
-
-
-
