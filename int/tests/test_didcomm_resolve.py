@@ -126,7 +126,7 @@ def test_update_method():
         "methods"
     ]
 
-    assert [method, method2] == methods
+    assert [method, method2].sort() == methods.sort()
 
 
 def test_fail_to_update_method_due_not_existing_conn_id():
