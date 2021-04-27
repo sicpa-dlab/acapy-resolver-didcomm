@@ -82,7 +82,7 @@ def test_register_method(established_connection):
     )
     assert resp.ok
     assert resp.json() == {
-        "results": {"didcomm_resolver": {"methods": ["testingmethod", "mock"]}}
+        "results": {"didcomm_resolver": {"methods": ["mock", "testingmethod"]}}
     }
 
     methods = requests.get("http://requester:3001/resolver/connections").json()[0][

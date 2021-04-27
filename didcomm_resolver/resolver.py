@@ -97,9 +97,6 @@ class DIDCommResolver(BaseDIDResolver):
     @classmethod
     async def _upsert_methods(cls, session, connection_id, methods, update=False):
 
-        # Remove possible duplicates methods in the request
-        methods = list(dict.fromkeys(methods))
-
         conn_record = await ConnRecord.retrieve_by_id(session, connection_id)
         conn_record = cast(ConnRecord, conn_record)
 
@@ -111,8 +108,9 @@ class DIDCommResolver(BaseDIDResolver):
             if conn_record_metadata:
                 current_methods = conn_record_metadata.get(cls.METADATA_METHODS)
                 methods.extend(current_methods)
-                # Remove duplicates if there is between methods and current methods
-                methods = list(dict.fromkeys(methods))
+
+        # Remove possible duplicates methods
+        methods = list(set(methods))
 
         await conn_record.metadata_set(
             session, cls.METADATA_KEY, {cls.METADATA_METHODS: methods}
