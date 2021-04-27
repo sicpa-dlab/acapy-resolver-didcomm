@@ -72,7 +72,7 @@ class ConnectionResolverMetadataSchema(OpenAPISchema):
 
 
 @docs(
-    tags=["resolver"],
+    tags=["didcomm-resolver"],
     summary="List DIDcomm resolvers.",
 )
 @response_schema(ConnectionIDListSchema(), 200, description="")
@@ -137,7 +137,7 @@ async def connections(request: web.BaseRequest):
 
 
 @docs(
-    tags=["resolver"],
+    tags=["didcomm-resolver"],
     summary="Fetch DIDComm Resolver details.",
 )
 @response_schema(ConnectionIDListSchema(), 200, description="")
@@ -172,7 +172,7 @@ async def connection(request: web.BaseRequest):
     return web.json_response(resolver)
 
 
-@docs(tags=["resolver"], summary="Register DIDcomm resolver.")
+@docs(tags=["didcomm-resolver"], summary="Register DIDcomm resolver.")
 @match_info_schema(ConnIdMatchInfoSchema())
 @request_schema(ConnectionRegisterRequestSchema())
 @response_schema(ConnectionRegisterResultSchema(), 200, description="")
@@ -203,7 +203,7 @@ async def connection_register(request: web.BaseRequest):
     return web.json_response({"results": results})
 
 
-@docs(tags=["resolver"], summary="Update DIDcomm resolvable methods.")
+@docs(tags=["didcomm-resolver"], summary="Update DIDcomm resolvable methods.")
 @match_info_schema(ConnIdMatchInfoSchema())
 @request_schema(ConnectionRegisterRequestSchema())
 @response_schema(ConnectionRegisterResultSchema(), 200, description="")
@@ -232,7 +232,7 @@ async def connection_update(request: web.BaseRequest):
     return web.json_response({"results": "Ok"})
 
 
-@docs(tags=["resolver"], summary="Remove an existing connection record.")
+@docs(tags=["didcomm-resolver"], summary="Remove an existing connection record.")
 @match_info_schema(ConnIdMatchInfoSchema())
 @response_schema(ConnectionRemoveResponseSchema, 200, description="")
 async def connection_remove(request: web.BaseRequest):
