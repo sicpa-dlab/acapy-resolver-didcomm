@@ -53,8 +53,8 @@ def context():
 
 @pytest.fixture(autouse=True)
 def mock_env():
-    with mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "fake_config"}) as patched:
-        yield patched
+    with mock.patch.dict(os.environ, {"UNI_RESOLVER_CONFIG": "fake_config"}):
+        yield os.environ
 
 
 @pytest.fixture()
