@@ -1,25 +1,21 @@
 """Didcommm Universal DID Resolver."""
 
 import asyncio
-import logging
 import json
+import logging
 import os
 from pathlib import Path
-from typing import Optional, Sequence, cast
+from typing import Optional, Set, cast
 
+import yaml
 from aries_cloudagent.config.injection_context import InjectionContext
 from aries_cloudagent.connections.models.conn_record import ConnRecord
 from aries_cloudagent.core.profile import Profile, ProfileSession
 from aries_cloudagent.messaging.responder import BaseResponder
-from aries_cloudagent.resolver.base import (
-    BaseDIDResolver,
-    DIDMethodNotSupported,
-    DIDNotFound,
-    ResolverError,
-    ResolverType,
-)
+from aries_cloudagent.resolver.base import (BaseDIDResolver,
+                                            DIDMethodNotSupported, DIDNotFound,
+                                            ResolverError, ResolverType)
 from aries_cloudagent.storage.base import BaseStorage
-import yaml
 
 from .acapy_tools.awaitable_handler import send_and_wait_for_response
 from .protocol.v0_9 import ResolveDID, ResolveDIDResult
@@ -36,7 +32,7 @@ class DIDCommResolver(BaseDIDResolver):
     def __init__(self):
         """Initialize DIDCommResolver."""
         super().__init__(ResolverType.NON_NATIVE)
-        self._supported_methods: Optional[Sequence[str]] = None
+        self._supported_methods: Set[str] = set()
 
     async def setup(self, context: InjectionContext):
         """Load resolver specific configuration."""
@@ -65,7 +61,7 @@ class DIDCommResolver(BaseDIDResolver):
             ) from err
 
     @property
-    def supported_methods(self) -> Sequence[str]:
+    def supported_methods(self) -> Set[str]:
         """Return supported methods.
 
         The DIDCommResolver defines a set of methods that it is willing to attempt
@@ -79,7 +75,7 @@ class DIDCommResolver(BaseDIDResolver):
         cls,
         session: ProfileSession,
         connection_id: str,
-        methods: Sequence[str],
+        methods: Set[str],
     ):
         """Register connection as a resolver connection."""
         return await cls._upsert_methods(session, connection_id, methods)
@@ -89,32 +85,29 @@ class DIDCommResolver(BaseDIDResolver):
         cls,
         session: ProfileSession,
         connection_id: str,
-        methods: Sequence[str],
+        methods: Set[str],
     ):
         """Update resolvers supported methods."""
         return await cls._upsert_methods(session, connection_id, methods, update=True)
 
     @classmethod
-    async def _upsert_methods(cls, session, connection_id, methods, update=False):
-
-        conn_record = await ConnRecord.retrieve_by_id(session, connection_id)
-        conn_record = cast(ConnRecord, conn_record)
-
-        if not update:
+    async def _upsert_methods(cls, session, connection_id, methods: Set[str], update=False):
+        # retrieve connection record for metadata lookup, where methods are persisted
+        conn_record: ConnRecord = cast(ConnRecord, await ConnRecord.retrieve_by_id(session, connection_id))
+        if update:
+            # retrieve current methods
             conn_record_metadata = await conn_record.metadata_get(
                 session, cls.METADATA_KEY
             )
-
+            # union methods
             if conn_record_metadata:
-                current_methods = conn_record_metadata.get(cls.METADATA_METHODS)
-                methods.extend(current_methods)
-
-        # Remove possible duplicates methods
-        methods = list(set(methods))
-
+                current_methods:Set = conn_record_metadata.get(cls.METADATA_METHODS)
+                methods = current_methods | methods
+        # update metadata records with new supported methods
         await conn_record.metadata_set(
             session, cls.METADATA_KEY, {cls.METADATA_METHODS: methods}
         )
+        # return stored, updated supported methods
         return await conn_record.metadata_get_all(session)
 
     @classmethod
@@ -159,7 +152,7 @@ class DIDCommResolver(BaseDIDResolver):
 
             records = await storage.find_all_records(
                 ConnRecord.RECORD_TYPE_METADATA, {"key": self.METADATA_KEY}
-            )
+            ) or list()
             connection_ids = self._retrieve_connection_ids(records, method)
             responder = session.inject(BaseResponder)
 
