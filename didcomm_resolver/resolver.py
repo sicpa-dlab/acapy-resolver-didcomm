@@ -149,10 +149,7 @@ class DIDCommResolver(BaseDIDResolver):
         )
         records = cast(List[StorageRecord], records)
         resolver_connections = [
-            ResolverConnection(
-                record.tags["connection_id"], json.loads(record.value)["methods"]
-            )
-            for record in records
+            ResolverConnection.from_metadata_record(record) for record in records
         ]
         if matching:
             resolver_connections = list(filter(matching, resolver_connections))
@@ -194,10 +191,7 @@ class DIDCommResolver(BaseDIDResolver):
                     timeout=30,
                     connection_id=res_conn.connection_id,
                 )
-                result = response.did_document
-                if not isinstance(result, dict):
-                    result = json.loads(result)
-                return result
+                return response.did_document
             except DIDNotFound:
                 LOGGER.exception(
                     "Connection %s could not find DID %s", res_conn.connection_id, did
