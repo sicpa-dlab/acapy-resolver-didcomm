@@ -12,9 +12,13 @@ from aries_cloudagent.config.injection_context import InjectionContext
 from aries_cloudagent.connections.models.conn_record import ConnRecord
 from aries_cloudagent.core.profile import Profile, ProfileSession
 from aries_cloudagent.messaging.responder import BaseResponder
-from aries_cloudagent.resolver.base import (BaseDIDResolver,
-                                            DIDMethodNotSupported, DIDNotFound,
-                                            ResolverError, ResolverType)
+from aries_cloudagent.resolver.base import (
+    BaseDIDResolver,
+    DIDMethodNotSupported,
+    DIDNotFound,
+    ResolverError,
+    ResolverType,
+)
 from aries_cloudagent.storage.base import BaseStorage
 
 from .acapy_tools.awaitable_handler import send_and_wait_for_response
@@ -91,9 +95,13 @@ class DIDCommResolver(BaseDIDResolver):
         return await cls._upsert_methods(session, connection_id, methods, update=True)
 
     @classmethod
-    async def _upsert_methods(cls, session, connection_id, methods: Set[str], update=False):
+    async def _upsert_methods(
+        cls, session, connection_id, methods: Set[str], update=False
+    ):
         # retrieve connection record for metadata lookup, where methods are persisted
-        conn_record: ConnRecord = cast(ConnRecord, await ConnRecord.retrieve_by_id(session, connection_id))
+        conn_record: ConnRecord = cast(
+            ConnRecord, await ConnRecord.retrieve_by_id(session, connection_id)
+        )
         if update:
             # retrieve current methods
             conn_record_metadata = await conn_record.metadata_get(
@@ -101,7 +109,7 @@ class DIDCommResolver(BaseDIDResolver):
             )
             # union methods
             if conn_record_metadata:
-                current_methods:Set = conn_record_metadata.get(cls.METADATA_METHODS)
+                current_methods: Set = conn_record_metadata.get(cls.METADATA_METHODS)
                 methods = current_methods | methods
         # update metadata records with new supported methods
         await conn_record.metadata_set(
@@ -150,9 +158,12 @@ class DIDCommResolver(BaseDIDResolver):
         async with profile.session() as session:
             storage = session.inject(BaseStorage)
 
-            records = await storage.find_all_records(
-                ConnRecord.RECORD_TYPE_METADATA, {"key": self.METADATA_KEY}
-            ) or list()
+            records = (
+                await storage.find_all_records(
+                    ConnRecord.RECORD_TYPE_METADATA, {"key": self.METADATA_KEY}
+                )
+                or list()
+            )
             connection_ids = self._retrieve_connection_ids(records, method)
             responder = session.inject(BaseResponder)
 
