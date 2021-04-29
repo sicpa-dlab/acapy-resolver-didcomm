@@ -1,30 +1,26 @@
 """Test AwaitableHandler classes."""
 
 
-from didcomm_resolver.resolver import ResolverConnection
 from unittest.mock import MagicMock
+
 from aiohttp import web
 from aries_cloudagent.admin.request_context import AdminRequestContext
 from aries_cloudagent.connections.models.conn_record import ConnRecord
 from aries_cloudagent.messaging.models.base import BaseModelError
+from aries_cloudagent.storage.error import StorageError, StorageNotFoundError
+from asynctest import mock
+import pytest
 
+from didcomm_resolver.resolver import ResolverConnection
 from didcomm_resolver.role.requester.routes import (
-    connections,
     connection,
     connection_register,
     connection_remove,
-    register,
-    post_process_routes,
     connection_update,
+    connections,
+    post_process_routes,
+    register,
 )
-import pytest
-from asynctest import mock
-from aries_cloudagent.storage.error import StorageError, StorageNotFoundError
-
-
-class AsyncMock(MagicMock):
-    async def __call__(self, *args, **kwargs):
-        return super(AsyncMock, self).__call__(*args, **kwargs)
 
 
 TEST_RESOLVER_CONNECTIONS = [ResolverConnection("test-1", {"test", "example"})]
