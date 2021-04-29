@@ -119,7 +119,7 @@ class DIDCommResolver(BaseDIDResolver):
         conn_record = await ConnRecord.retrieve_by_id(session, connection_id)
         conn_record = cast(ConnRecord, conn_record)
         await conn_record.metadata_set(
-            session, cls.METADATA_KEY, {cls.METADATA_METHODS: methods}
+            session, cls.METADATA_KEY, {cls.METADATA_METHODS: list(methods)}
         )
         return ResolverConnection(connection_id=connection_id, methods=methods)
 
