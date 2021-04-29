@@ -7,7 +7,7 @@ from aiohttp_apispec import (
     request_schema,
     response_schema,
 )
-from typing import Sequence
+from typing import Set
 
 from marshmallow import fields
 
@@ -21,7 +21,7 @@ from aries_cloudagent.messaging.valid import UUIDFour
 from aries_cloudagent.storage.error import StorageError, StorageNotFoundError
 from ...resolver import DIDCommResolver
 
-DID_COMM_SPEC_URI = ""  # FIXME: PLS
+DID_COMM_SPEC_URI = "Coming_Soon"  # FIXME: PLS
 METADATA_KEY = DIDCommResolver.METADATA_KEY
 
 
@@ -160,7 +160,7 @@ async def connection(request: web.BaseRequest):
         metadata = await record.metadata_get(session, METADATA_KEY)
         if not isinstance(metadata, dict):
             metadata = json.loads(metadata.value)
-        methods = [] if metadata is None else metadata["methods"]
+        methods = set() if metadata is None else metadata["methods"]
         resolver = {
             "connection_id": record.connection_id,
             "methods": methods,
@@ -191,7 +191,7 @@ async def connection_register(request: web.BaseRequest):
     session = await context.session()
     connection_id = request.match_info.get("conn_id")
     body = await request.json() if request.body_exists else {}
-    methods: Sequence[str] = body.get("methods", [])
+    methods: Set[str] = body.get("methods", set())
     try:
         results = await DIDCommResolver.register_connection(
             session, connection_id, methods
@@ -222,7 +222,7 @@ async def connection_update(request: web.BaseRequest):
     session = await context.session()
     connection_id = request.match_info.get("conn_id")
     body = await request.json() if request.body_exists else {}
-    methods: Sequence[str] = body.get("methods", [])
+    methods: Set[str] = body.get("methods", set())
     try:
         await DIDCommResolver.update_connection(session, connection_id, methods)
     except StorageNotFoundError as err:
