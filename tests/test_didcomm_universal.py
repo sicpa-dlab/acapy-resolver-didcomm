@@ -358,5 +358,7 @@ async def test_resolve_not_supported(ResolveDIDMock, send_wait_Mock, resolver, p
 async def test_register_connection(retrieve_by_id_mock, resolver, profile):
     connection_id = "did:sov:201029023831"
     methods = ["sov"]
-    retrieve_by_id_mock.return_value = AsyncMock()
+    conn_mock = AsyncMock()
+    conn_mock.metadata_get.return_value = {"methods": ["method2", "sov"]}
+    retrieve_by_id_mock.return_value = conn_mock
     await DIDCommResolver.register_connection(profile, connection_id, methods)

@@ -82,7 +82,7 @@ def test_register_method(established_connection):
     )
     assert resp.ok
     assert resp.json() == {
-        "results": {"didcomm_resolver": {"methods": ["testingmethod"]}}
+        "results": {"didcomm_resolver": {"methods": ["mock", "testingmethod"]}}
     }
 
     methods = requests.get("http://requester:3001/resolver/connections").json()[0][
@@ -126,7 +126,7 @@ def test_update_method():
         "methods"
     ]
 
-    assert [method, method2] == methods
+    assert [method, method2].sort() == methods.sort()
 
 
 def test_fail_to_update_method_due_not_existing_conn_id():
