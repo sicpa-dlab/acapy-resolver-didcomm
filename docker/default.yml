@@ -1,4 +1,4 @@
-label: Aries Cloud Agent + didcomm_resolver Plugin
+label: Aries Cloud Agent + DIDComm Resolver
 
 # Admin
 admin: [0.0.0.0, 3001]
