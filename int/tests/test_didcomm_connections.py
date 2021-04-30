@@ -2,6 +2,8 @@
 
 # pylint: disable=redefined-outer-name
 
+# TODO No state should transfer between tests!
+
 import time
 
 import pytest
@@ -59,13 +61,10 @@ def test_auto_accept_conn(resolver, requester):
     assert received
 
 
-def test_retrieve_zero_connections():
+def test_retrieve_zero_connections(requester: Agent):
     """Test retrieve DIDComm Connections."""
-
-    resp = requests.get("http://requester:3001/resolver/connections")
-
-    assert resp.ok
-    assert len(resp.json()) == 0
+    resp = requester.get("/resolver/connections")
+    assert len(resp["results"]) == 0
 
 
 def test_register_didcomm_connection():
@@ -94,12 +93,10 @@ def test_retrieve_connections():
     assert len(resp.json()) == 1
 
 
-def test_retrieve_specific_connection_by_id():
+def test_retrieve_specific_connection_by_id(requester):
     """Test retrieve DIDComm Connections by id."""
 
-    conn_id = requests.get("http://requester:3001/resolver/connections").json()[0][
-        "connection_id"
-    ]
+    conn_id = requester.get("/resolver/connections")["results"][0]["connection_id"]
 
     resp = requests.get(f"http://requester:3001/resolver/connections/{conn_id}")
     assert resp.ok
@@ -115,14 +112,12 @@ def test_fail_to_retrieve_no_existing_specific_connection_by_id():
     assert not resp.ok
 
 
-def test_remove_connection_record():
+def test_remove_connection_record(established_connection):
     """Test remove DIDComm Connection record."""
 
-    conn_id = requests.get("http://requester:3001/resolver/connections").json()[0][
-        "connection_id"
-    ]
-
-    resp = requests.delete(f"http://requester:3001/resolver/connections/{conn_id}")
+    resp = requests.delete(
+        f"http://requester:3001/resolver/connections/{established_connection}"
+    )
     assert resp.ok
     assert resp.json() == {"results": {}}
 

@@ -12,4 +12,4 @@ services:
 
   tests:
     volumes:
-      - ./test_didcomm_resolver.py:/usr/src/app/test_didcomm_resolver.py:z
+      - ./tests:/usr/src/app/tests:z

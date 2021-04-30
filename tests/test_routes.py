@@ -2,283 +2,187 @@
 
 
 from unittest.mock import MagicMock
-from aiohttp import web
-from aries_cloudagent.messaging.models.base import BaseModelError
 
+from aiohttp import web
+from aries_cloudagent.admin.request_context import AdminRequestContext
+from aries_cloudagent.connections.models.conn_record import ConnRecord
+from aries_cloudagent.messaging.models.base import BaseModelError
+from aries_cloudagent.storage.error import StorageError, StorageNotFoundError
+from asynctest import mock
+import pytest
+
+from didcomm_resolver.resolver import ResolverConnection
 from didcomm_resolver.role.requester.routes import (
-    connections,
     connection,
     connection_register,
     connection_remove,
-    register,
-    post_process_routes,
     connection_update,
+    connections,
+    post_process_routes,
+    register,
 )
-import pytest
-from asynctest import mock
-from aries_cloudagent.storage.error import StorageError
 
 
-class AsyncMock(MagicMock):
-    async def __call__(self, *args, **kwargs):
-        return super(AsyncMock, self).__call__(*args, **kwargs)
+TEST_RESOLVER_CONNECTIONS = [ResolverConnection("test-1", {"test", "example"})]
+
+
+@pytest.fixture
+def context():
+    """Context fixture."""
+    yield AdminRequestContext.test_context()
+
+
+@pytest.fixture
+def web_request(context):
+    """Web request fixture."""
+    request_dict = {
+        "context": context,
+        "outbound_message_router": mock.CoroutineMock(),
+    }
+    request = mock.MagicMock(
+        app={},
+        match_info={},
+        query={},
+        json=mock.CoroutineMock(),
+        __getitem__=lambda _, k: request_dict[k],
+    )
+    yield request
+
+
+@pytest.fixture
+def conn_record():
+    """Connection record fixture."""
+    record = ConnRecord()
+    record.metadata_get = mock.CoroutineMock(return_value={"methods": "test"})
+    record.metadata_set = mock.CoroutineMock()
+    record.metadata_delete = mock.CoroutineMock()
+    yield record
+
+
+@pytest.fixture(autouse=True)
+def MockConnRecord(conn_record):
+    """Mock ConnRecord fixture."""
+    with mock.patch("didcomm_resolver.resolver.ConnRecord") as patched:
+        patched.retrieve_by_id = mock.CoroutineMock(return_value=conn_record)
+        yield patched
+
+
+@pytest.fixture(autouse=True)
+def mock_resolver_connections():
+    """Mock DIDCommResolver.resolver_connections."""
+    with mock.patch(
+        "didcomm_resolver.resolver.DIDCommResolver.resolver_connections",
+        mock.CoroutineMock(return_value=TEST_RESOLVER_CONNECTIONS),
+    ) as patched:
+        yield patched
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.role.requester.routes.ConnRecord")
-async def test_connection(conRecord_mock):
-    async_mock = AsyncMock()
-    async_mock.metadata_get.return_value = {"methods": "test"}
-    async_mock.connection_id = "conn"
-    async_mock.state = "active"
-
-    async def list_aux(*args, **kwargs):
-        return async_mock
-
-    conRecord_mock.retrieve_by_id = list_aux
-
-    context_magic = MagicMock()
-    context_magic.session.side_effect = AsyncMock()
-    request = web.BaseRequest
-    request.match_info = {"conn_id": "mocked_id"}
-
-    request = MagicMock()
-    request["context"].session.side_effect = list_aux
-
-    result = await connection(request)
+async def test_connection(web_request):
+    web_request.match_info = {"conn_id": "mocked_id"}
+    result = await connection(web_request)
     assert result.reason == "OK"
     assert result.status == 200
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.role.requester.routes.ConnRecord")
-async def test_connection_fail(conRecord_mock):
-    async_mock = AsyncMock()
-    async_mock.metadata_get.return_value = {"methods": "test"}
-    async_mock.connection_id = "conn"
-    async_mock.state = "active"
-
-    async def list_aux(*args, **kwargs):
-        return async_mock
-
-    async def raise_aux(*args, **kwargs):
-        raise StorageError()
-
-    conRecord_mock.retrieve_by_id = raise_aux
-
-    context_magic = MagicMock()
-    context_magic.session.side_effect = AsyncMock()
-    request = web.BaseRequest
-    request.match_info = {"conn_id": "mocked_id"}
-    request = MagicMock()
-    request["context"].session.side_effect = list_aux
-
+async def test_connection_x(web_request, MockConnRecord):
+    MockConnRecord.retrieve_by_id.side_effect = StorageError()
+    web_request.match_info = {"conn_id": "mocked_id"}
     with pytest.raises(web.HTTPBadRequest):
-        await connection(request)
+        await connection(web_request)
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.role.requester.routes.ConnRecord")
-async def test_send_and_wait_for_response(conRecord_mock):
-    async_mock = AsyncMock()
-    async_mock.metadata_get.return_value = {"methods": "test"}
-    async_mock.connection_id = "conn"
-    async_mock.state = "active"
-
-    async def list_aux(*args, **kwargs):
-        return [async_mock]
-
-    conRecord_mock.query.side_effect = list_aux
-
-    context_magic = MagicMock()
-    context_magic.session.side_effect = AsyncMock()
-    result = await connections({"context": context_magic})
+async def test_connections(web_request):
+    result = await connections(web_request)
     assert result.reason == "OK"
     assert result.status == 200
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.role.requester.routes.ConnRecord")
-async def test_send_and_wait_for_response_fail(conRecord_mock):
-    async def list_aux(*args, **kwargs):
-        raise StorageError()
-
-    conRecord_mock.retrieve_by_id.side_effect = StorageError
-    conRecord_mock.query.side_effect = list_aux
-
+async def test_connections_x(mock_resolver_connections, web_request):
+    mock_resolver_connections.side_effect = StorageError()
     with pytest.raises(web.HTTPBadRequest):
-        await connections({"context": AsyncMock()})
+        await connections(web_request)
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.role.requester.routes.DIDCommResolver")
-async def test_connection_register(DIDCommResolver_mock):
-    async def aux(*args):
-        return []
-
-    DIDCommResolver_mock.register_connection.side_effect = aux
-    async_mock = AsyncMock()
-    async_mock.session.return_value = MagicMock()
-
-    my_dict = {"context": async_mock, "conn_id": "123", "c": 3}
-
-    def getitem(name):
-        return my_dict[name]
-
-    def setitem(name, val):
-        my_dict[name] = val
-
-    mock = MagicMock()
-    mock.__getitem__.side_effect = getitem
-    mock.__setitem__.side_effect = setitem
-
-    mock.match_info = mock
-    mock.body_exists = False
-    result = await connection_register(mock)
+async def test_connection_register(web_request):
+    web_request.match_info = {"conn_id": "test"}
+    web_request.json.return_value = {"methods": ["test"]}
+    result = await connection_register(web_request)
     assert result.reason == "OK"
     assert result.status == 200
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.role.requester.routes.DIDCommResolver")
-async def test_connection_register_fail(DIDCommResolver_mock):
-    async def aux(*args):
-        raise BaseModelError()
-
-    DIDCommResolver_mock.register_connection.side_effect = aux
-    async_mock = AsyncMock()
-    async_mock.session.return_value = MagicMock()
-
-    my_dict = {"context": async_mock, "conn_id": "123", "c": 3}
-
-    def getitem(name):
-        return my_dict[name]
-
-    def setitem(name, val):
-        my_dict[name] = val
-
-    mock = MagicMock()
-    mock.__getitem__.side_effect = getitem
-    mock.__setitem__.side_effect = setitem
-
-    mock.match_info = mock
-    mock.body_exists = False
-    with pytest.raises(web.HTTPBadRequest):
-        await connection_register(mock)
+async def test_connection_register_x_no_such_connection(web_request, MockConnRecord):
+    MockConnRecord.retrieve_by_id.side_effect = StorageNotFoundError()
+    web_request.match_info = {"conn_id": "test"}
+    web_request.json.return_value = {"methods": ["test"]}
+    with pytest.raises(web.HTTPNotFound):
+        await connection_register(web_request)
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.role.requester.routes.DIDCommResolver")
-async def test_connection_update(DIDCommResolver_mock):
-    async def aux(*args):
-        return []
+async def test_connection_register_x_base_model_error(web_request, MockConnRecord):
+    MockConnRecord.retrieve_by_id.side_effect = BaseModelError()
+    web_request.match_info = {"conn_id": "test"}
+    web_request.json.return_value = {"methods": ["test"]}
+    with pytest.raises(web.HTTPBadRequest):
+        await connection_register(web_request)
 
-    DIDCommResolver_mock.update_connection.side_effect = aux
-    async_mock = AsyncMock()
-    async_mock.session.return_value = MagicMock()
 
-    my_dict = {"context": async_mock, "conn_id": "123", "c": 3}
-
-    def getitem(name):
-        return my_dict[name]
-
-    def setitem(name, val):
-        my_dict[name] = val
-
-    mock = MagicMock()
-    mock.__getitem__.side_effect = getitem
-    mock.__setitem__.side_effect = setitem
-
-    mock.match_info = mock
-    mock.body_exists = False
-    result = await connection_update(mock)
+@pytest.mark.asyncio
+async def test_connection_update(web_request):
+    web_request.match_info = {"conn_id": "test"}
+    web_request.json.return_value = {"methods": ["test"]}
+    result = await connection_update(web_request)
     assert result.reason == "OK"
     assert result.status == 200
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.role.requester.routes.DIDCommResolver")
-async def test_connection_update_fail(DIDCommResolver_mock):
-    async def raise_exc(*args):
-        raise BaseModelError()
-
-    DIDCommResolver_mock.update_connection.side_effect = raise_exc
-    async_mock = AsyncMock()
-    async_mock.session.return_value = MagicMock()
-
-    my_dict = {"context": async_mock, "conn_id": "123", "c": 3}
-
-    def getitem(name):
-        return my_dict[name]
-
-    def setitem(name, val):
-        my_dict[name] = val
-
-    mock = MagicMock()
-    mock.__getitem__.side_effect = getitem
-    mock.__setitem__.side_effect = setitem
-
-    mock.match_info = mock
-    mock.body_exists = False
-    with pytest.raises(web.HTTPBadRequest):
-        await connection_update(mock)
+async def test_connection_update_x_no_such_connection(web_request, MockConnRecord):
+    MockConnRecord.retrieve_by_id.side_effect = StorageNotFoundError()
+    web_request.match_info = {"conn_id": "test"}
+    web_request.json.return_value = {"methods": ["test"]}
+    with pytest.raises(web.HTTPNotFound):
+        await connection_update(web_request)
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.role.requester.routes.DIDCommResolver")
-async def test_remove_connection(DIDCommResolver_mock):
-    async def aux(*args):
-        return []
+async def test_connection_update_x_base_model_error(web_request, MockConnRecord):
+    MockConnRecord.retrieve_by_id.side_effect = BaseModelError()
+    web_request.match_info = {"conn_id": "test"}
+    web_request.json.return_value = {"methods": ["test"]}
+    with pytest.raises(web.HTTPBadRequest):
+        await connection_update(web_request)
 
-    DIDCommResolver_mock.remove_connection.side_effect = aux
-    async_mock = AsyncMock()
-    async_mock.session.return_value = MagicMock()
 
-    my_dict = {"context": async_mock, "conn_id": "123", "c": 3}
-
-    def getitem(name):
-        return my_dict[name]
-
-    def setitem(name, val):
-        my_dict[name] = val
-
-    mock = MagicMock()
-    mock.__getitem__.side_effect = getitem
-    mock.__setitem__.side_effect = setitem
-
-    mock.match_info = mock
-    mock.body_exists = False
-    result = await connection_remove(mock)
+@pytest.mark.asyncio
+async def test_connection_remove(web_request):
+    web_request.match_info = {"conn_id": "test"}
+    result = await connection_remove(web_request)
     assert result.reason == "OK"
     assert result.status == 200
 
 
 @pytest.mark.asyncio
-@mock.patch("didcomm_resolver.role.requester.routes.DIDCommResolver")
-async def test_remove_connection_fail(DIDCommResolver_mock):
-    async def aux(*args):
-        raise BaseModelError()
+async def test_connection_remove_x_no_such_connection(web_request, MockConnRecord):
+    MockConnRecord.retrieve_by_id.side_effect = StorageNotFoundError()
+    web_request.match_info = {"conn_id": "test"}
+    with pytest.raises(web.HTTPNotFound):
+        await connection_remove(web_request)
 
-    DIDCommResolver_mock.remove_connection.side_effect = aux
-    async_mock = AsyncMock()
-    async_mock.session.return_value = MagicMock()
 
-    my_dict = {"context": async_mock, "conn_id": "123", "c": 3}
-
-    def getitem(name):
-        return my_dict[name]
-
-    def setitem(name, val):
-        my_dict[name] = val
-
-    mock = MagicMock()
-    mock.__getitem__.side_effect = getitem
-    mock.__setitem__.side_effect = setitem
-
-    mock.match_info = mock
-    mock.body_exists = False
+@pytest.mark.asyncio
+async def test_connection_remove_x_base_model_error(web_request, MockConnRecord):
+    MockConnRecord.retrieve_by_id.side_effect = BaseModelError()
+    web_request.match_info = {"conn_id": "test"}
     with pytest.raises(web.HTTPBadRequest):
-        await connection_remove(mock)
+        await connection_remove(web_request)
 
 
 @pytest.mark.asyncio
