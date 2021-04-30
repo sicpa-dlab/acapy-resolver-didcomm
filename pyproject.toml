@@ -12,12 +12,7 @@ python = "^3.6.9"
 aiohttp = "~=3.7.4"
 pydid = "~=0.2.3"
 aioredis = "~=1.3.1"
-
-[tool.poetry.dependencies.aries-cloudagent]
-    git = "https://github.com/hyperledger/aries-cloudagent-python"
-    rev = "main"
-    # Temporarily use extras; these should go away once fixed in master
-    extras = ["indy", "bbs"]
+aries-cloudagent = { git = "https://github.com/hyperledger/aries-cloudagent-python", rev = "main"}
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.9.0"
