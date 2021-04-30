@@ -15,3 +15,6 @@ ${CONTAINER_RUNTIME} run --rm \
     -o /local/acapy-client \
     --skip-validate-spec \
     --additional-properties=packageName=acapy_client
+
+rm -rf --preserve-root ./acapy-client/docs
+rm -rf --preserve-root ./acapy-client/test
