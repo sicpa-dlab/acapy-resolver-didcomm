@@ -761,11 +761,11 @@ class Endpoint(object):
         """ This method is invoked when endpoints are called
         Example:
 
-        api_instance = ActionMenuApi()
-        api_instance.action_menu_conn_id_close_post  # this is an instance of the class Endpoint
-        api_instance.action_menu_conn_id_close_post()  # this invokes api_instance.action_menu_conn_id_close_post.__call__()
+        api_instance = BasicmessageApi()
+        api_instance.send_basic_message  # this is an instance of the class Endpoint
+        api_instance.send_basic_message()  # this invokes api_instance.send_basic_message.__call__()
         which then invokes the callable functions stored in that endpoint at
-        api_instance.action_menu_conn_id_close_post.callable or self.callable in this class
+        api_instance.send_basic_message.callable or self.callable in this class
 
         """
         return self.callable(self, *args, **kwargs)
