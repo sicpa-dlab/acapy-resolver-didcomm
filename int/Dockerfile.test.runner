@@ -4,7 +4,9 @@ WORKDIR /usr/src/app/
 
 COPY tests/* tests/
 COPY requirements.txt requirements.txt
+COPY ./acapy-client acapy-client
 RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -e ./acapy-client
 
 # Add docker-compose-wait tool -------------------
 ENV WAIT_VERSION 2.7.2
