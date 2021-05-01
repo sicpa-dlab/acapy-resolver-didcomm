@@ -1,135 +1,69 @@
 """Integration tests for DIDComm resolver."""
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name, unused-argument
 
-# TODO No state should transfer between tests!
-
-import time
-
+from acapy_client.exceptions import ApiException
+from acapy_client.models import ConnectionRegisterRequest, ReceiveInvitationRequest
 import pytest
-import requests
-from . import Agent, REQUESTER, RESOLVER
+
+from .conftest import Agent
 
 
-@pytest.fixture(scope="session")
-def requester():
-    """requester agent fixture."""
-    yield Agent(REQUESTER)
-
-
-@pytest.fixture(scope="session")
-def resolver():
-    """resolver agent fixture."""
-    yield Agent(RESOLVER)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def established_connection(resolver, requester):
-    """Established connection filter."""
-    invite = resolver.create_invitation(auto_accept="true")["invitation"]
-    resp = requester.receive_invite(invite, auto_accept="true")
-    yield resp["connection_id"]
-
-
-def test_conn_invitation(resolver):
-    """Test connection invitation."""
-
-    resp = resolver.create_invitation(auto_accept="false")
-    assert resp["invitation"]
-    invite = resp["invitation"]
-    assert invite["serviceEndpoint"]
-    assert invite["recipientKeys"]
-
-
-def test_conn_receive_accept_invite(resolver, requester):
-    """Test connection receive accept invite."""
-
-    invite = resolver.create_invitation(auto_accept="false")["invitation"]
-    received = requester.receive_invite(invite, auto_accept="false")
-    time.sleep(1)
-    resp = requester.accept_invite(received["connection_id"])
-
-    assert resp
-
-
-def test_auto_accept_conn(resolver, requester):
-    """Test auto accepting connection."""
-
-    invite = resolver.create_invitation(auto_accept="true")["invitation"]
-    received = requester.receive_invite(invite, auto_accept="true")
-
-    assert received
+@pytest.fixture
+def resolver_connection(established_connection, requester: Agent):
+    """Fixture for a registered resolver connection with cleanup."""
+    requester.didcomm_resolver.register_resolver_connection(
+        established_connection, body=ConnectionRegisterRequest(methods=["test"])
+    )
+    yield
+    requester.didcomm_resolver.unset_resolver_connection(established_connection)
 
 
 def test_retrieve_zero_connections(requester: Agent):
     """Test retrieve DIDComm Connections."""
-    resp = requester.get("/resolver/connections")
+    resp = requester.didcomm_resolver.resolver_connections()
     assert len(resp["results"]) == 0
 
 
-def test_register_didcomm_connection():
+def test_register_didcomm_connection(requester: Agent, resolver_connection):
     """Test retrieve DIDComm Connections."""
-
-    body = {
-        "metadata": {"didcomm_resolver": {"methods": ["test"]}},
-        "recipient_keys": ["H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"],
-        "routing_keys": ["H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"],
-        "service_endpoint": "http://requester:3001",
-    }
-
-    resp = requests.post(
-        "http://requester:3001/connections/create-invitation", json=body
-    )
-
-    assert resp.ok
+    assert requester.didcomm_resolver.resolver_connections()["results"]
 
 
-def test_retrieve_connections():
+def test_retrieve_connections(requester: Agent, resolver_connection):
     """Test retrieve DIDComm Connections."""
-
-    resp = requests.get("http://requester:3001/resolver/connections")
-
-    assert resp.ok
-    assert len(resp.json()) == 1
+    resp = requester.didcomm_resolver.resolver_connections()
+    assert len(resp["results"]) == 1
 
 
-def test_retrieve_specific_connection_by_id(requester):
+def test_retrieve_specific_connection_by_id(
+    requester: Agent, established_connection, resolver_connection
+):
     """Test retrieve DIDComm Connections by id."""
-
-    conn_id = requester.get("/resolver/connections")["results"][0]["connection_id"]
-
-    resp = requests.get(f"http://requester:3001/resolver/connections/{conn_id}")
-    assert resp.ok
-    assert resp.json()["connection_id"] == conn_id
+    conn = requester.didcomm_resolver.resolver_connection(established_connection)
+    assert conn["connection_id"] == established_connection
 
 
-def test_fail_to_retrieve_no_existing_specific_connection_by_id():
+def test_fail_to_retrieve_no_existing_specific_connection_by_id(requester: Agent):
     """Test to fail the retrieve DIDComm Connections by id."""
-
-    conn_id = "not-existing-id"
-
-    resp = requests.get(f"http://requester:3001/resolver/connections/{conn_id}")
-    assert not resp.ok
+    with pytest.raises(ApiException) as error:
+        requester.didcomm_resolver.resolver_connection("doesn't exist")
+        assert error.value.status == 400
 
 
-def test_remove_connection_record(established_connection):
-    """Test remove DIDComm Connection record."""
+def test_unset_resolver_connection(established_connection, requester: Agent):
+    """Test remove DIDComm resolver Connection record."""
 
-    resp = requests.delete(
-        f"http://requester:3001/resolver/connections/{established_connection}"
+    requester.didcomm_resolver.register_resolver_connection(
+        established_connection, body=ConnectionRegisterRequest(methods=["test"])
     )
-    assert resp.ok
-    assert resp.json() == {"results": {}}
-
-    conections = requests.get("http://requester:3001/resolver/connections")
-
-    assert conections.ok
-    assert len(conections.json()) == 0
+    requester.didcomm_resolver.unset_resolver_connection(established_connection)
+    connections = requester.didcomm_resolver.resolver_connections()
+    assert len(connections["results"]) == 0
 
 
-def test_fail_to_remove_no_existing_connection_record():
+def test_fail_to_remove_no_existing_connection_record(requester: Agent):
     """Test to fail the remove DIDComm Connection record."""
-
-    conn_id = "no-existing-id"
-    resp = requests.delete(f"http://requester:3001/resolver/connections/{conn_id}")
-    assert not resp.ok
+    with pytest.raises(ApiException) as error:
+        requester.didcomm_resolver.unset_resolver_connection("doesn't exist")
+        assert error.value.status == 400
