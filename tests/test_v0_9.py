@@ -42,10 +42,13 @@ def context(message):
 
 @pytest.fixture
 def mock_resolve_did():
+    result = MagicMock()
+    result.did_doc.serialize.return_value = {"id": "did:example:123"}
+    result.resolver_metadata
     with mock.patch.object(
         ResolveDID,
         "resolve_did",
-        mock.CoroutineMock(return_value={"id": "did:example:123"}),
+        mock.CoroutineMock(return_value=result),
     ) as resolve_did:
         yield resolve_did
 
@@ -159,3 +162,4 @@ async def test_ResolveDIDProblemReport_handle():
 
     result = resolved_did.Handler().map_exception(context)
     assert "mocked" in result.message
+
