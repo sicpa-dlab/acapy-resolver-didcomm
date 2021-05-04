@@ -110,8 +110,10 @@ class ResolveDID(DIDResolutionMessage):
             reply_msg = ResolveDIDProblemReport(explain_ltxt=msg)
 
         else:
-            reply_msg = ResolveDIDResult(did_document=resolution.did_doc.serialize(),
-                                         resolver_metadata=resolution.resolver_metadata)
+            reply_msg = ResolveDIDResult(
+                did_document=resolution.did_doc.serialize(),
+                resolver_metadata=resolution.resolver_metadata,
+            )
 
         reply_msg.assign_thread_from(context.message)
         if "l10n" in context.message._decorators:
@@ -247,4 +249,3 @@ MESSAGE_TYPES = DIDCommPrefix.qualify_all(
         for msg_class in [ResolveDID, ResolveDIDResult]
     }
 )
-
