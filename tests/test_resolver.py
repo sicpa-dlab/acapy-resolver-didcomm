@@ -3,6 +3,7 @@
 
 from contextlib import contextmanager
 import os
+from unittest.mock import MagicMock
 
 from aries_cloudagent.connections.models.conn_record import ConnRecord
 from aries_cloudagent.core.in_memory import InMemoryProfile
@@ -13,6 +14,7 @@ from aries_cloudagent.resolver.base import (
     DIDNotFound,
     ResolverError,
 )
+from aries_cloudagent.storage.error import StorageNotFoundError
 from asynctest import mock
 import pytest
 import yaml
@@ -73,16 +75,6 @@ def mock_config_file():
             yield patched
 
     yield _mock_config_file
-
-
-@pytest.fixture(autouse=True)
-def mock_resolver_connections():
-    """Mock DIDCommResolver.resolver_connections."""
-    with mock.patch(
-        "didcomm_resolver.resolver.DIDCommResolver.resolver_connections",
-        mock.CoroutineMock(return_value=TEST_RESOLVER_CONNECTIONS),
-    ) as patched:
-        yield patched
 
 
 @pytest.fixture
@@ -154,26 +146,38 @@ async def test_resolve_dict(resolver, profile, response):
         "didcomm_resolver.resolver.send_and_wait_for_response",
         mock.CoroutineMock(return_value=response),
     ):
-        result = await resolver._resolve(profile, "did:example:1234abcd")
-        assert result == DOC
+        with mock.patch(
+            "didcomm_resolver.resolver.DIDCommResolver.resolver_connections",
+            mock.CoroutineMock(return_value=TEST_RESOLVER_CONNECTIONS),
+        ):
+            result = await resolver._resolve(profile, "did:example:1234abcd")
+            assert result == DOC
 
 
 @pytest.mark.asyncio
 async def test_resolve_not_found(resolver, profile):
     with mock.patch(
-        "didcomm_resolver.resolver.send_and_wait_for_response",
-        mock.CoroutineMock(side_effect=DIDNotFound),
-    ), pytest.raises(DIDNotFound):
-        await resolver._resolve(profile, "did:example:1234abcd")
+        "didcomm_resolver.resolver.DIDCommResolver.resolver_connections",
+        mock.CoroutineMock(return_value=TEST_RESOLVER_CONNECTIONS),
+    ):
+        with mock.patch(
+            "didcomm_resolver.resolver.send_and_wait_for_response",
+            mock.CoroutineMock(side_effect=DIDNotFound),
+        ), pytest.raises(DIDNotFound):
+            await resolver._resolve(profile, "did:example:1234abcd")
 
 
 @pytest.mark.asyncio
 async def test_resolve_timeout(resolver, profile):
     with mock.patch(
-        "didcomm_resolver.resolver.send_and_wait_for_response",
-        mock.CoroutineMock(side_effect=WaitingForMessageFailed),
-    ), pytest.raises(DIDNotFound):
-        await resolver._resolve(profile, "did:example:1234abcd")
+        "didcomm_resolver.resolver.DIDCommResolver.resolver_connections",
+        mock.CoroutineMock(return_value=TEST_RESOLVER_CONNECTIONS),
+    ):
+        with mock.patch(
+            "didcomm_resolver.resolver.send_and_wait_for_response",
+            mock.CoroutineMock(side_effect=WaitingForMessageFailed),
+        ), pytest.raises(DIDNotFound):
+            await resolver._resolve(profile, "did:example:1234abcd")
 
 
 @pytest.mark.asyncio
@@ -184,10 +188,13 @@ async def test_resolve_no_responder(resolver, profile):
 
 
 @pytest.mark.asyncio
-async def test_resolve_not_supported(resolver, profile, mock_resolver_connections):
-    mock_resolver_connections.return_value = []
-    with pytest.raises(DIDMethodNotSupported):
-        await resolver._resolve(profile, "did:example:1234abcd")
+async def test_resolve_not_supported(resolver, profile):
+    with mock.patch(
+        "didcomm_resolver.resolver.DIDCommResolver.resolver_connections",
+        mock.CoroutineMock(return_value=[]),
+    ):
+        with pytest.raises(DIDMethodNotSupported):
+            await resolver._resolve(profile, "did:example:1234abcd")
 
 
 @pytest.mark.asyncio
@@ -200,3 +207,41 @@ async def test_set_resolver_connection(profile, MockConnRecord):
         )
     assert resolver_connection.connection_id == conn_id
     assert resolver_connection.methods == methods
+
+
+@pytest.mark.asyncio
+async def test_from_metadata_record(profile, MockConnRecord):
+    mock = MagicMock()
+    mock.value = '{"methods": "sovtest"}'
+    result = ResolverConnection.from_metadata_record(mock)
+    assert "sovtest" == result[1]
+
+
+@pytest.mark.asyncio
+async def test_from_connection_id_fail(profile, MockConnRecord):
+    mock = MagicMock()
+
+    async def return_none(*args):
+        return None
+
+    MockConnRecord.metadata_get.side_effect = return_none
+    MockConnRecord.retrieve_by_id.return_value = MockConnRecord
+
+    with pytest.raises(StorageNotFoundError):
+        await ResolverConnection.from_connection_id(mock, mock)
+
+
+@pytest.mark.asyncio
+async def test_resolver_connections(profile, MockConnRecord):
+    resolver_connections = []
+
+    async def aux(*args, **kwargs):
+        return resolver_connections
+
+    session = mock.MagicMock()
+    matching = mock.MagicMock()
+    session.find_all_records.side_effect = aux
+    session.inject.return_value = session
+
+    result = await DIDCommResolver.resolver_connections(session, matching)
+    assert resolver_connections == result

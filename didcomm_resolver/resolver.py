@@ -173,9 +173,25 @@ class DIDCommResolver(BaseDIDResolver):
                 )
 
         # Construct Resolve DID message
-        resolve_did_message = ResolveDID(did=did)
 
+        did_doc, not_found_ids = await self._resolve_process(
+            resolver_connections, did, responder
+        )
+        if did_doc:
+            return did_doc
+
+        raise DIDNotFound(
+            "DID not found on any resolver connections({})".format(
+                ", ".join(not_found_ids)
+            )
+        )
+
+    async def _resolve_process(self, resolver_connections, did, responder) -> tuple:
+        """Resolve process logic."""
         not_found_conn_ids = []
+        resolve_did_message = ResolveDID(did=did)
+        did_doc = None
+
         for res_conn in resolver_connections:
             LOGGER.debug(
                 "Sending resolve request to %s: %s",
@@ -191,22 +207,17 @@ class DIDCommResolver(BaseDIDResolver):
                     timeout=30,
                     connection_id=res_conn.connection_id,
                 )
-                return response.did_document
-            except DIDNotFound:
-                LOGGER.exception(
-                    "Connection %s could not find DID %s", res_conn.connection_id, did
-                )
-                not_found_conn_ids.append(res_conn.connection_id)
-                continue
-            except WaitingForMessageFailed:
-                LOGGER.exception(
-                    "Querying %s for DID %s timed out", res_conn.connection_id, did
-                )
+                did_doc = response.did_document
+                break
+
+            except (DIDNotFound, WaitingForMessageFailed) as exception:
+                if isinstance(exception, DIDNotFound):
+                    message = "Connection %s could not find DID %s"
+                else:
+                    message = "Querying %s for DID %s timed out"
+
+                LOGGER.exception(message, res_conn.connection_id, did)
                 not_found_conn_ids.append(res_conn.connection_id)
                 continue
 
-        raise DIDNotFound(
-            "DID not found on any resolver connections({})".format(
-                ", ".join(not_found_conn_ids)
-            )
-        )
+        return did_doc, not_found_conn_ids

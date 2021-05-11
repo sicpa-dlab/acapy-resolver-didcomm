@@ -93,6 +93,7 @@ class ResolveDID(DIDResolutionMessage):
             context: request context
             responder: responder callback
         """
+        raise_exception = False
         LOGGER.debug("ResolveDidHandler called with context %s", context)
         if not isinstance(context.message, ResolveDID):
             raise HandlerException(
@@ -108,6 +109,7 @@ class ResolveDID(DIDResolutionMessage):
             LOGGER.error(str(err))
             msg = f"Could not resolve DID {context.message.did}"
             reply_msg = ResolveDIDProblemReport(explain_ltxt=msg)
+            raise_exception = True
 
         else:
             reply_msg = ResolveDIDResult(
@@ -120,7 +122,7 @@ class ResolveDID(DIDResolutionMessage):
             reply_msg._decorators["l10n"] = context.message._decorators["l10n"]
         await responder.send_reply(reply_msg)
 
-        if isinstance(reply_msg, ResolveDIDProblemReport):
+        if raise_exception:
             raise HandlerException(msg)
 
 
