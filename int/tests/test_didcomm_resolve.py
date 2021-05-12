@@ -37,10 +37,25 @@ def test_no_indy_ledger_resolver_connection_returns_error(requester: Agent):
 def test_mocked_resolver_connection(resolver_connection, requester: Agent):
     """Test resolution over DIDComm Connection."""
     resp = requester.resolver.resolve(DID_MOCK)
-    assert resp == {
+    assert resp == {"did_doc": {
         "@context": "https://www.w3.org/ns/did/v1",
-        "id": "did:mock:test:mocked_id",
+        "id": "did:mock:test:mocked_id"}
     }
+
+
+def test_mocked_resolver_connection_verbose(resolver_connection, requester: Agent):
+    """Test resolution over DIDComm Connection."""
+
+    resp = requests.get(f"http://requester:3001/resolver/resolve/{DID_MOCK}",
+                        params={"verbose": True}).json()
+    assert resp["did_doc"] == {
+        "@context": "https://www.w3.org/ns/did/v1",
+        "id": "did:mock:test:mocked_id"}
+
+    resolver_metadata = resp["resolver_metadata"]
+    assert resolver_metadata["type"] == "non-native"
+    assert resolver_metadata["driverId"] == "did:mock"
+    assert resolver_metadata["resolver"] == "didcomm_resolver.resolver.DIDCommResolver"
 
 
 def test_mocked_failed_resolver_connection(resolver_connection, requester: Agent):
