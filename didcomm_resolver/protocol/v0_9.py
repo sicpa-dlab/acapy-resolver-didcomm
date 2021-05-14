@@ -114,7 +114,7 @@ class ResolveDID(DIDResolutionMessage):
         else:
             reply_msg = ResolveDIDResult(
                 did_document=resolution.did_doc.serialize(),
-                resolver_metadata=resolution.resolver_metadata,
+                resolver_metadata=resolution.metadata,
             )
 
         reply_msg.assign_thread_from(context.message)
