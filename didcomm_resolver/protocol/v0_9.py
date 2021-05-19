@@ -84,7 +84,7 @@ class ResolveDID(DIDResolutionMessage):
     async def resolve_did(context: RequestContext, did: str) -> dict:
         """Resolve a DID using the did resolver interface."""
         resolver = context.inject(DIDResolver)
-        return await resolver.resolve(context.profile, did)
+        return await resolver.resolve_with_metadata(context.profile, did)
 
     async def handle(self, context: RequestContext, responder: BaseResponder):
         """Resolve a DID in response to a resolve message.
@@ -113,7 +113,7 @@ class ResolveDID(DIDResolutionMessage):
 
         else:
             reply_msg = ResolveDIDResult(
-                did_document=resolution.did_doc.serialize(),
+                did_document=resolution.did_document.serialize(),
                 resolver_metadata=resolution.metadata,
             )
 
