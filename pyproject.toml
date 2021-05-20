@@ -2,7 +2,7 @@
 name = "didcomm-resolver"
 version = "0.1.0"
 description = "DIDComm DID Resolution protocol handlers and Resolver interface"
-authors = ["Adam Burdett <burdettadam@gmail.com>", "Daniel Bluhm <dbluhm@pm.me>"]
+authors = ["Adam Burdett <burdettadam@gmail.com>", "Daniel Bluhm <dbluhm@pm.me>", "Luis Gómez luis.gomezalonso@sicpa.com"]
 license = "Apache-2.0"
 readme="README.md"
 repository="https://github.com/sicpa-dlab/aries-acapy-plugin-didcomm-resolver"

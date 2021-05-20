@@ -42,26 +42,40 @@ def context(message):
 
 @pytest.fixture
 def mock_resolve_did():
+    result = MagicMock()
+    result.did_document.serialize.return_value = {"id": "did:example:123"}
+    result.resolver_metadata
     with mock.patch.object(
-        ResolveDID,
-        "resolve_did",
-        mock.CoroutineMock(return_value={"id": "did:example:123"}),
+            ResolveDID,
+            "resolve_did",
+            mock.CoroutineMock(return_value=result),
     ) as resolve_did:
         yield resolve_did
 
 
-@pytest.mark.skip(reason="This test needs to be updated")
-@mock.patch("aiohttp.ClientSession.get")
 @pytest.mark.asyncio
-async def test_resolve_did(mock_get, message):
-    mock_get.return_value.__aenter__.return_value.status = 200
-    mock_get.return_value.__aenter__.return_value.json = mock.CoroutineMock(
-        return_value={"didDocument": DOC}
-    )
-    doc = await message.resolve_did(
-        "did:example:1234abcd", "https://dev.uniresolver.io/1.0/identifiers/{did}"
-    )
-    assert doc == DOC
+async def test_resolve_did(message):
+    mock_metadata = {
+            "resolver_type": "non-native",
+            "resolver": "MockResolver",
+            "retrieved_time": "2021-05-19T11:37:00Z",
+            "duration": 41
+        }
+
+    async def aux(*args, **kwargs):
+        result = MagicMock()
+        result.did_document = DOC
+        result.metadata = mock_metadata
+        return result
+
+    context = mock.MagicMock()
+    context.resolve_with_metadata.side_effect = aux
+    context.inject.return_value = context
+
+    resolution = await message.resolve_did(context, "did:example:1234abcd")
+
+    assert resolution.did_document == DOC
+    assert resolution.metadata == mock_metadata
 
 
 @pytest.mark.asyncio
@@ -76,15 +90,17 @@ async def test_handler_do_handle(resolved_did, context, responder):
     # TODO: actually test something
 
 
-@pytest.mark.skip(reason="This test needs to be updated")
-@mock.patch("aiohttp.ClientSession.get")
 @pytest.mark.asyncio
-async def test_resolve_did_error(mock_get, message):
-    mock_get.return_value.__aenter__.return_value.status = 400
+@mock.patch("didcomm_resolver.protocol.v0_9.ResolveDIDProblemReport")
+@mock.patch("didcomm_resolver.protocol.v0_9.ResolveDID.resolve_did")
+async def test_resolve_did_error(resolve_did, problem, context, responder, message):
+    async def raise_exc(*args, **kwargs):
+        raise Exception("test_exc")
+
+    resolve_did.side_effect = raise_exc
+
     with pytest.raises(HandlerException):
-        await message.resolve_did(
-            "did:example:1234abcd", "https://dev.uniresolver.io/1.0/identifiers/{did}"
-        )
+        await message.handle(context, responder)
 
 
 @pytest.mark.asyncio
@@ -106,11 +122,12 @@ async def test_handle_resolve_did_fail(context, responder, message, mock_resolve
 
 
 @pytest.mark.asyncio
+@mock.patch("didcomm_resolver.protocol.v0_9.ResolveDIDProblemReport")
 async def test_handle_error(context, responder, message, mock_resolve_did):
     """Test resolve did handler."""
     mock_resolve_did.resolve_did = mock.CoroutineMock(side_effect=HandlerException())
     with pytest.raises(HandlerException), mock.patch.object(
-        ResolveDID, "resolve_did", mock.CoroutineMock(side_effect=HandlerException())
+            ResolveDID, "resolve_did", mock.CoroutineMock(side_effect=HandlerException())
     ):
         await message.handle(context, responder)
 
@@ -143,11 +160,12 @@ async def test_ResolveDIDResult_handle_fail(resolved_did):
 
 
 @pytest.mark.asyncio
-async def test_ResolveDIDProblemReport_handle():
+@mock.patch("didcomm_resolver.protocol.v0_9.ResolveDIDProblemReport")
+async def test_ResolveDIDProblemReport_handle(resolve_did_problem):
     context = MagicMock()
     context.explain_ltxt = "mocked"
     resolved_did = ResolveDIDProblemReport()
-    context.message = resolved_did
+    context.message = resolve_did_problem
 
     async def aux(*args, **kwargs):
         return None

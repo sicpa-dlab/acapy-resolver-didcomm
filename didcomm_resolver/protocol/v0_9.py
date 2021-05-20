@@ -84,7 +84,7 @@ class ResolveDID(DIDResolutionMessage):
     async def resolve_did(context: RequestContext, did: str) -> dict:
         """Resolve a DID using the did resolver interface."""
         resolver = context.inject(DIDResolver)
-        return (await resolver.resolve(context.profile, did)).serialize()
+        return await resolver.resolve_with_metadata(context.profile, did)
 
     async def handle(self, context: RequestContext, responder: BaseResponder):
         """Resolve a DID in response to a resolve message.
@@ -93,6 +93,7 @@ class ResolveDID(DIDResolutionMessage):
             context: request context
             responder: responder callback
         """
+        raise_exception = False
         LOGGER.debug("ResolveDidHandler called with context %s", context)
         if not isinstance(context.message, ResolveDID):
             raise HandlerException(
@@ -103,21 +104,25 @@ class ResolveDID(DIDResolutionMessage):
         LOGGER.info("Received resolve did: %s", context.message.did)
 
         try:
-            did_document = await self.resolve_did(context, context.message.did)
+            resolution = await self.resolve_did(context, context.message.did)
         except Exception as err:
             LOGGER.error(str(err))
             msg = f"Could not resolve DID {context.message.did}"
             reply_msg = ResolveDIDProblemReport(explain_ltxt=msg)
+            raise_exception = True
 
         else:
-            reply_msg = ResolveDIDResult(did_document=did_document)
+            reply_msg = ResolveDIDResult(
+                did_document=resolution.did_document.serialize(),
+                resolver_metadata=resolution.metadata,
+            )
 
         reply_msg.assign_thread_from(context.message)
         if "l10n" in context.message._decorators:
             reply_msg._decorators["l10n"] = context.message._decorators["l10n"]
         await responder.send_reply(reply_msg)
 
-        if isinstance(reply_msg, ResolveDIDProblemReport):
+        if raise_exception:
             raise HandlerException(msg)
 
 
@@ -140,11 +145,24 @@ class ResolveDIDResult(DIDResolutionMessage):
             description="DID Document",
         )
 
+        resolver_metadata = fields.Dict(
+            required=False,
+            keys=fields.Str(),
+            description="Resolver information",
+        )
+
+        method_metadata = fields.Dict(
+            required=False,
+            keys=fields.Str(),
+            description="DID method information",
+        )
+
     def __init__(
         self,
         *,
         sent_time: Union[str, datetime] = None,
         did_document: dict = None,
+        resolver_metadata: dict = None,
         localization: dict = None,
         **kwargs,
     ):
