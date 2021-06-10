@@ -17,7 +17,9 @@ CONFIG_FILE = "didcomm_resolver/default_config.yml"
 async def setup(context: InjectionContext):
     """Setup requester capabilities."""
 
-    conf = context.settings.get("plugin_config", {}).get("didcomm_resolver.role.requester")
+    conf = context.settings.get("plugin_config", {}).get(
+        "didcomm_resolver.role.requester"
+    )
     if conf:
         with open(CONFIG_FILE, "r") as default_config:
             config = yaml.safe_load(default_config)
