@@ -9,6 +9,8 @@ plugin:
   - didcomm_resolver.role.resolver
   - didcomm_resolver.role.requester
 
+plugin-config: plugin-config.yaml
+
 # Transport
 inbound-transport:
   - [http, 0.0.0.0, 3000]
