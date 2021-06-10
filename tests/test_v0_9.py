@@ -43,7 +43,7 @@ def context(message):
 @pytest.fixture
 def mock_resolve_did():
     result = MagicMock()
-    result.did_document.serialize.return_value = {"id": "did:example:123"}
+    result.did_document = {"id": "did:example:123"}
     result.resolver_metadata
     with mock.patch.object(
             ResolveDID,
