@@ -2,8 +2,6 @@
 
 import json
 import logging
-import os
-from pathlib import Path
 from typing import Callable, List, NamedTuple, Set, cast
 
 from aries_cloudagent.config.injection_context import InjectionContext
@@ -20,7 +18,6 @@ from aries_cloudagent.resolver.base import (
 from aries_cloudagent.storage.base import BaseStorage
 from aries_cloudagent.storage.error import StorageNotFoundError
 from aries_cloudagent.storage.record import StorageRecord
-import yaml
 
 from .acapy_tools.awaitable_handler import (
     WaitingForMessageFailed,
@@ -29,6 +26,7 @@ from .acapy_tools.awaitable_handler import (
 from .protocol.v0_9 import ResolveDID, ResolveDIDResult
 
 LOGGER = logging.getLogger(__name__)
+CONFIG_FILE = "didcomm_resolver/default_config.json"
 
 
 class ResolverConnection(NamedTuple):
@@ -72,19 +70,26 @@ class DIDCommResolver(BaseDIDResolver):
 
     async def setup(self, context: InjectionContext):
         """Load resolver specific configuration."""
-        config_file = os.environ.get(
-            "DIDCOMM_RESOLVER_CONFIG", Path(__file__).parent / "default_config.yml"
+
+        plugin_conf = context.settings.get("plugin_config", {}).get(
+            "didcomm_resolver.role.requester"
         )
         try:
-            with open(config_file) as input_yaml:
-                configuration = yaml.load(input_yaml, Loader=yaml.SafeLoader)
-        except FileNotFoundError as err:
+            with open(
+                CONFIG_FILE,
+            ) as f:
+                # Default configuration
+                configuration = json.load(f)
+        except Exception:
             raise ResolverError(
-                f"Failed to load configuration file for {self.__class__.__name__}"
-            ) from err
+                f"Failed to load default configuration file for {self.__class__.__name__}"
+            )
+        if plugin_conf:
+            try:
+                configuration.update(plugin_conf)
+            except Exception as ex:
+                raise ResolverError(f"plugin configuration error{ex}")
 
-        if not isinstance(configuration, dict):
-            raise ResolverError("Configuration file is not properly loaded")
         self.configure(configuration)
 
     def configure(self, configuration: dict):

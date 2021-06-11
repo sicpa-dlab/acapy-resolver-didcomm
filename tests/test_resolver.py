@@ -17,7 +17,7 @@ from aries_cloudagent.resolver.base import (
 from aries_cloudagent.storage.error import StorageNotFoundError
 from asynctest import mock
 import pytest
-import yaml
+import json
 
 from didcomm_resolver import DIDCommResolver
 from didcomm_resolver.acapy_tools.awaitable_handler import WaitingForMessageFailed
@@ -64,7 +64,7 @@ def mock_config_file():
     @contextmanager
     def _mock_config_file(contents: str = None):
         if not contents:
-            contents = yaml.dump(
+            contents = json.load(
                 {"endpoint": "http://example.com", "methods": ["example"]}
             )
 
@@ -103,9 +103,8 @@ def MockConnRecord(conn_record):
 
 @pytest.mark.asyncio
 async def test_setup(mock_config_file, resolver, context):
-    with mock_config_file():
-        await resolver.setup(context)
-    assert resolver._supported_methods == ["example"]
+    await resolver.setup(context)
+    assert "sov" in resolver._supported_methods
 
 
 @pytest.mark.asyncio
@@ -115,17 +114,10 @@ async def test_setup_failed(mock_config_file, resolver, context):
 
 
 @pytest.mark.asyncio
-async def test_setup_env_error(mock_env, resolver, context):
-    mock_env["DIDCOMM_RESOLVER_CONFIG"] = "error"
+async def test_setup_plugin_config_error(mock_config_file, resolver, context):
+    plug_conf = {"plugin_config": {"didcomm_resolver.role.requester": "error"}}
+    context.update_settings(plug_conf)
     with pytest.raises(ResolverError):
-        await resolver.setup(context)
-
-
-@pytest.mark.asyncio
-async def test_setup_yaml_error(mock_config_file, resolver, context):
-    with mock_config_file(
-        yaml.dump({"not_endpoint": "http://example.com", "not_methods": ["example"]})
-    ), pytest.raises(ResolverError):
         await resolver.setup(context)
 
 
