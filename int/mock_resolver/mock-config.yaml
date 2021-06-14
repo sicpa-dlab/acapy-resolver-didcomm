@@ -1,0 +1,3 @@
+didcomm_resolver.role.requester:
+  methods:
+    - "mock"
