@@ -26,7 +26,44 @@ from .acapy_tools.awaitable_handler import (
 from .protocol.v0_9 import ResolveDID, ResolveDIDResult
 
 LOGGER = logging.getLogger(__name__)
-CONFIG_FILE = "didcomm_resolver/default_config.json"
+DEFAULT_CONFIGURATION = {
+    "methods": [
+        "sov",
+        "abt",
+        "btcr",
+        "erc725",
+        "dom",
+        "stack",
+        "ethr",
+        "web",
+        "v1",
+        "key",
+        "ipid",
+        "jolo",
+        "hacera",
+        "elem",
+        "seraphid",
+        "github",
+        "ccp",
+        "work",
+        "ont",
+        "kilt",
+        "evan",
+        "echo",
+        "factom",
+        "dock",
+        "trust",
+        "io",
+        "bba",
+        "bid",
+        "schema",
+        "ion",
+        "ace",
+        "gatc",
+        "unisot",
+        "icon",
+    ]
+}
 
 
 class ResolverConnection(NamedTuple):
@@ -74,16 +111,8 @@ class DIDCommResolver(BaseDIDResolver):
         plugin_conf = context.settings.get("plugin_config", {}).get(
             "didcomm_resolver.role.requester"
         )
-        try:
-            with open(
-                CONFIG_FILE,
-            ) as f:
-                # Default configuration
-                configuration = json.load(f)
-        except Exception:
-            raise ResolverError(
-                f"Failed to load default configuration file for {self.__class__.__name__}"
-            )
+
+        configuration = DEFAULT_CONFIGURATION
         if plugin_conf:
             try:
                 configuration.update(plugin_conf)
@@ -110,6 +139,7 @@ class DIDCommResolver(BaseDIDResolver):
         to resolve. Resolver connections supported methods must be a subset of this
         list in order for the method to be resolved on a given connection.
         """
+
         return self._supported_methods
 
     @classmethod
