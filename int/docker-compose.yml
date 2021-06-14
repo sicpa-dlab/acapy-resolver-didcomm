@@ -17,6 +17,7 @@ services:
       dockerfile: docker/Dockerfile
     volumes:
       - "./mock_resolver:/home/indy/mock_resolver:z"
+      - "./mock_resolver/mock-config.yaml:/home/indy/mock-config.yaml:z"
     command: start --arg-file default.yml --plugin didcomm_resolver.role.resolver --plugin mock_resolver -e http://resolver:3000 --log-level debug
 
   #*************************************************************
@@ -27,9 +28,8 @@ services:
   requester:
     image: didcomm-resolver-testing
     volumes:
-      - "./mock_resolver/resolver_config.yml:/home/indy/didcomm_resolver_config.yml:z"
-    environment:
-      - DIDCOMM_RESOLVER_CONFIG=/home/indy/didcomm_resolver_config.yml
+      - "./mock_resolver/mock-config.yaml:/home/indy/mock-config.yaml:z"
+
     command: start --arg-file default.yml --plugin didcomm_resolver.role.requester -e http://requester:3000 --log-level debug
 
   #*************************************************************

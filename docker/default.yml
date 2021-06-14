@@ -9,7 +9,7 @@ plugin:
   - didcomm_resolver.role.resolver
   - didcomm_resolver.role.requester
 
-plugin-config: plugin-config.yaml
+plugin-config: mock-config.yaml
 
 # Transport
 inbound-transport:

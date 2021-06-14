@@ -1,7 +1,6 @@
 didcomm_resolver.role.requester:
   methods:
     - "sov"
-    - "mock"
     - "abt"
     - "btcr"
     - "erc725"
