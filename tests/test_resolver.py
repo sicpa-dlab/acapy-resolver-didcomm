@@ -110,6 +110,8 @@ async def test_setup(mock_config_file, resolver, context):
 @pytest.mark.asyncio
 async def test_setup_failed(mock_config_file, resolver, context):
     with mock_config_file("fail"), pytest.raises(ResolverError):
+        plugin_config = {"didcomm_resolver.role.requester": "testtofail"}
+        context.update_settings({"plugin_config": plugin_config})
         await resolver.setup(context)
 
 
