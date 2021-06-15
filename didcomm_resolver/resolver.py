@@ -1,6 +1,7 @@
 """Didcommm Universal DID Resolver."""
 
 import json
+import re
 import logging
 from typing import Callable, List, NamedTuple, Set, cast
 
@@ -103,44 +104,28 @@ class DIDCommResolver(BaseDIDResolver):
     def __init__(self):
         """Initialize DIDCommResolver."""
         super().__init__(ResolverType.NON_NATIVE)
-        self._supported_methods: Set[str] = set()
 
     async def setup(self, context: InjectionContext):
-        """Load resolver specific configuration."""
+        pass
 
-        plugin_conf = context.settings.get("plugin_config", {}).get(
-            "didcomm_resolver.role.requester"
+    async def supports(self, profile: Profile, did: str) -> bool:
+        """Return if this resolver supports the given DID."""
+        async with profile.session() as session:
+            try:
+                resolver_connections = await DIDCommResolver.resolver_connections(session)
+            except Exception:
+                return False
+
+        supported_methods = []
+
+        for resolver_connection in resolver_connections:
+            supported_methods.extend(resolver_connection.methods)
+
+        supported_did_regex = re.compile(
+            "^did:(?:{}):.*$".format("|".join(supported_methods))
         )
 
-        configuration = DEFAULT_CONFIGURATION
-        if plugin_conf:
-            try:
-                configuration.update(plugin_conf)
-            except Exception as ex:
-                raise ResolverError(f"plugin configuration error{ex}")
-
-        self.configure(configuration)
-
-    def configure(self, configuration: dict):
-        """Configure this instance of the resolver from configuration dict."""
-        try:
-            self._supported_methods = configuration["methods"]
-        except KeyError as err:
-            raise ResolverError(
-                f"Failed to configure {self.__class__.__name__}, "
-                "missing attribute in configuration: {err}"
-            ) from err
-
-    @property
-    def supported_methods(self) -> Set[str]:
-        """Return supported methods.
-
-        The DIDCommResolver defines a set of methods that it is willing to attempt
-        to resolve. Resolver connections supported methods must be a subset of this
-        list in order for the method to be resolved on a given connection.
-        """
-
-        return self._supported_methods
+        return bool(supported_did_regex.match(did))
 
     @classmethod
     async def set_resolver_connection(
