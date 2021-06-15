@@ -112,7 +112,9 @@ class DIDCommResolver(BaseDIDResolver):
         """Return if this resolver supports the given DID."""
         async with profile.session() as session:
             try:
-                resolver_connections = await DIDCommResolver.resolver_connections(session)
+                resolver_connections = await DIDCommResolver.resolver_connections(
+                    session
+                )
             except Exception:
                 return False
 
