@@ -1,9 +1,8 @@
 """Didcommm Universal DID Resolver."""
 
 import json
+import re
 import logging
-import os
-from pathlib import Path
 from typing import Callable, List, NamedTuple, Set, cast
 
 from aries_cloudagent.config.injection_context import InjectionContext
@@ -20,7 +19,6 @@ from aries_cloudagent.resolver.base import (
 from aries_cloudagent.storage.base import BaseStorage
 from aries_cloudagent.storage.error import StorageNotFoundError
 from aries_cloudagent.storage.record import StorageRecord
-import yaml
 
 from .acapy_tools.awaitable_handler import (
     WaitingForMessageFailed,
@@ -68,44 +66,30 @@ class DIDCommResolver(BaseDIDResolver):
     def __init__(self):
         """Initialize DIDCommResolver."""
         super().__init__(ResolverType.NON_NATIVE)
-        self._supported_methods: Set[str] = set()
 
     async def setup(self, context: InjectionContext):
-        """Load resolver specific configuration."""
-        config_file = os.environ.get(
-            "DIDCOMM_RESOLVER_CONFIG", Path(__file__).parent / "default_config.yml"
+        pass
+
+    async def supports(self, profile: Profile, did: str) -> bool:
+        """Return if this resolver supports the given DID."""
+        async with profile.session() as session:
+            try:
+                resolver_connections = await DIDCommResolver.resolver_connections(
+                    session
+                )
+            except Exception:
+                return False
+
+        supported_methods = []
+
+        for resolver_connection in resolver_connections:
+            supported_methods.extend(resolver_connection.methods)
+
+        supported_did_regex = re.compile(
+            "^did:(?:{}):.*$".format("|".join(supported_methods))
         )
-        try:
-            with open(config_file) as input_yaml:
-                configuration = yaml.load(input_yaml, Loader=yaml.SafeLoader)
-        except FileNotFoundError as err:
-            raise ResolverError(
-                f"Failed to load configuration file for {self.__class__.__name__}"
-            ) from err
 
-        if not isinstance(configuration, dict):
-            raise ResolverError("Configuration file is not properly loaded")
-        self.configure(configuration)
-
-    def configure(self, configuration: dict):
-        """Configure this instance of the resolver from configuration dict."""
-        try:
-            self._supported_methods = configuration["methods"]
-        except KeyError as err:
-            raise ResolverError(
-                f"Failed to configure {self.__class__.__name__}, "
-                "missing attribute in configuration: {err}"
-            ) from err
-
-    @property
-    def supported_methods(self) -> Set[str]:
-        """Return supported methods.
-
-        The DIDCommResolver defines a set of methods that it is willing to attempt
-        to resolve. Resolver connections supported methods must be a subset of this
-        list in order for the method to be resolved on a given connection.
-        """
-        return self._supported_methods
+        return bool(supported_did_regex.match(did))
 
     @classmethod
     async def set_resolver_connection(

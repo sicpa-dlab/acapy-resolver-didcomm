@@ -8,12 +8,12 @@ from didcomm_resolver.protocol.v0_9 import ResolveDIDProblemReport, ResolveDIDRe
 
 from ...resolver import DIDCommResolver
 
-
 __all__ = ["setup"]
 
 
 async def setup(context: InjectionContext):
     """Setup requester capabilities."""
+
     protocol_registry = context.inject(ProtocolRegistry)
     protocol_registry.register_message_types(
         {

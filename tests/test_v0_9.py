@@ -43,12 +43,12 @@ def context(message):
 @pytest.fixture
 def mock_resolve_did():
     result = MagicMock()
-    result.did_document.serialize.return_value = {"id": "did:example:123"}
+    result.did_document = {"id": "did:example:123"}
     result.resolver_metadata
     with mock.patch.object(
-            ResolveDID,
-            "resolve_did",
-            mock.CoroutineMock(return_value=result),
+        ResolveDID,
+        "resolve_did",
+        mock.CoroutineMock(return_value=result),
     ) as resolve_did:
         yield resolve_did
 
@@ -56,11 +56,11 @@ def mock_resolve_did():
 @pytest.mark.asyncio
 async def test_resolve_did(message):
     mock_metadata = {
-            "resolver_type": "non-native",
-            "resolver": "MockResolver",
-            "retrieved_time": "2021-05-19T11:37:00Z",
-            "duration": 41
-        }
+        "resolver_type": "non-native",
+        "resolver": "MockResolver",
+        "retrieved_time": "2021-05-19T11:37:00Z",
+        "duration": 41,
+    }
 
     async def aux(*args, **kwargs):
         result = MagicMock()
@@ -127,7 +127,7 @@ async def test_handle_error(context, responder, message, mock_resolve_did):
     """Test resolve did handler."""
     mock_resolve_did.resolve_did = mock.CoroutineMock(side_effect=HandlerException())
     with pytest.raises(HandlerException), mock.patch.object(
-            ResolveDID, "resolve_did", mock.CoroutineMock(side_effect=HandlerException())
+        ResolveDID, "resolve_did", mock.CoroutineMock(side_effect=HandlerException())
     ):
         await message.handle(context, responder)
 

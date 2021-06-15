@@ -113,7 +113,7 @@ class ResolveDID(DIDResolutionMessage):
 
         else:
             reply_msg = ResolveDIDResult(
-                did_document=resolution.did_document.serialize(),
+                did_document=resolution.did_document,
                 resolver_metadata=resolution.metadata,
             )
 

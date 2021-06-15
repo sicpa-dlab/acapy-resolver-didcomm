@@ -17,7 +17,7 @@ from aries_cloudagent.resolver.base import (
 from aries_cloudagent.storage.error import StorageNotFoundError
 from asynctest import mock
 import pytest
-import yaml
+import json
 
 from didcomm_resolver import DIDCommResolver
 from didcomm_resolver.acapy_tools.awaitable_handler import WaitingForMessageFailed
@@ -33,12 +33,6 @@ TEST_RESOLVER_CONNECTIONS = [ResolverConnection("test-1", {"test", "example"})]
 def resolver():
     """Resolver fixture."""
     didcomm_resolver = DIDCommResolver()
-    didcomm_resolver.configure(
-        {
-            "endpoint": "https://example.com",
-            "methods": ["example"],
-        }
-    )
     yield didcomm_resolver
 
 
@@ -64,7 +58,7 @@ def mock_config_file():
     @contextmanager
     def _mock_config_file(contents: str = None):
         if not contents:
-            contents = yaml.dump(
+            contents = json.load(
                 {"endpoint": "http://example.com", "methods": ["example"]}
             )
 
@@ -103,41 +97,48 @@ def MockConnRecord(conn_record):
 
 @pytest.mark.asyncio
 async def test_setup(mock_config_file, resolver, context):
-    with mock_config_file():
-        await resolver.setup(context)
-    assert resolver._supported_methods == ["example"]
+    await resolver.setup(context)
 
 
 @pytest.mark.asyncio
-async def test_setup_failed(mock_config_file, resolver, context):
-    with mock_config_file("fail"), pytest.raises(ResolverError):
-        await resolver.setup(context)
+@mock.patch("didcomm_resolver.DIDCommResolver.resolver_connections")
+async def test_supported_methods(mock_resolver_connections, resolver, profile):
+    async def aux_methods(*args):
+        result = mock.MagicMock()
+        result.methods = ["mock"]
+        return [result]
+    mock_resolver_connections.side_effect = aux_methods
+    assert await resolver.supports(profile=profile, did="did:mock:123")
 
 
 @pytest.mark.asyncio
-async def test_setup_env_error(mock_env, resolver, context):
-    mock_env["DIDCOMM_RESOLVER_CONFIG"] = "error"
-    with pytest.raises(ResolverError):
-        await resolver.setup(context)
+@mock.patch("didcomm_resolver.DIDCommResolver.resolver_connections")
+async def test_fail_supported_methods(mock_resolver_connections, resolver, profile):
+    async def aux_methods(*args):
+        result = mock.MagicMock()
+        result.methods = ["fail"]
+        return [result]
+    mock_resolver_connections.side_effect = aux_methods
+    assert not await resolver.supports(profile=profile, did="did:mock:123")
+
+@pytest.mark.asyncio
+@mock.patch("didcomm_resolver.DIDCommResolver.resolver_connections")
+async def test_fail_supported_methods(mock_resolver_connections, resolver, profile):
+    async def aux_methods(*args):
+        result = mock.MagicMock()
+        result.methods = ["fail"]
+        return [result]
+    mock_resolver_connections.side_effect = aux_methods
+    assert not await resolver.supports(profile=profile, did="did:mock:123")
 
 
 @pytest.mark.asyncio
-async def test_setup_yaml_error(mock_config_file, resolver, context):
-    with mock_config_file(
-        yaml.dump({"not_endpoint": "http://example.com", "not_methods": ["example"]})
-    ), pytest.raises(ResolverError):
-        await resolver.setup(context)
-
-
-@pytest.mark.asyncio
-def test_supported_methods(resolver):
-    assert resolver.supported_methods
-
-
-@pytest.mark.asyncio
-def test_configure_error(resolver):
-    with pytest.raises(ResolverError):
-        resolver.configure({"fake": "configure"})
+@mock.patch("didcomm_resolver.DIDCommResolver.resolver_connections")
+async def test_raise_exc_supported_methods(mock_resolver_connections, resolver, profile):
+    async def aux_methods(*args):
+        raise Exception("test exception")
+    mock_resolver_connections.side_effect = aux_methods
+    assert not await resolver.supports(profile=profile, did="did:mock:123")
 
 
 @pytest.mark.asyncio
