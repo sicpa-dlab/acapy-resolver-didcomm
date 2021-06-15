@@ -9,7 +9,6 @@ COPY ./setup.py .
 COPY ./pyproject.toml .
 COPY ./poetry.lock .
 COPY ./docker/default.yml .
-COPY ./docker/plugin-config.yaml .
 RUN chown -R indy:indy .
 USER $user
 

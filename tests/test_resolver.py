@@ -33,12 +33,6 @@ TEST_RESOLVER_CONNECTIONS = [ResolverConnection("test-1", {"test", "example"})]
 def resolver():
     """Resolver fixture."""
     didcomm_resolver = DIDCommResolver()
-    didcomm_resolver.configure(
-        {
-            "endpoint": "https://example.com",
-            "methods": ["example"],
-        }
-    )
     yield didcomm_resolver
 
 
@@ -104,34 +98,47 @@ def MockConnRecord(conn_record):
 @pytest.mark.asyncio
 async def test_setup(mock_config_file, resolver, context):
     await resolver.setup(context)
-    assert "sov" in resolver._supported_methods
 
 
 @pytest.mark.asyncio
-async def test_setup_failed(mock_config_file, resolver, context):
-    with mock_config_file("fail"), pytest.raises(ResolverError):
-        plugin_config = {"didcomm_resolver.role.requester": "testtofail"}
-        context.update_settings({"plugin_config": plugin_config})
-        await resolver.setup(context)
+@mock.patch("didcomm_resolver.DIDCommResolver.resolver_connections")
+async def test_supported_methods(mock_resolver_connections, resolver, profile):
+    async def aux_methods(*args):
+        result = mock.MagicMock()
+        result.methods = ["mock"]
+        return [result]
+    mock_resolver_connections.side_effect = aux_methods
+    assert await resolver.supports(profile=profile, did="did:mock:123")
 
 
 @pytest.mark.asyncio
-async def test_setup_plugin_config_error(mock_config_file, resolver, context):
-    plug_conf = {"plugin_config": {"didcomm_resolver.role.requester": "error"}}
-    context.update_settings(plug_conf)
-    with pytest.raises(ResolverError):
-        await resolver.setup(context)
+@mock.patch("didcomm_resolver.DIDCommResolver.resolver_connections")
+async def test_fail_supported_methods(mock_resolver_connections, resolver, profile):
+    async def aux_methods(*args):
+        result = mock.MagicMock()
+        result.methods = ["fail"]
+        return [result]
+    mock_resolver_connections.side_effect = aux_methods
+    assert not await resolver.supports(profile=profile, did="did:mock:123")
+
+@pytest.mark.asyncio
+@mock.patch("didcomm_resolver.DIDCommResolver.resolver_connections")
+async def test_fail_supported_methods(mock_resolver_connections, resolver, profile):
+    async def aux_methods(*args):
+        result = mock.MagicMock()
+        result.methods = ["fail"]
+        return [result]
+    mock_resolver_connections.side_effect = aux_methods
+    assert not await resolver.supports(profile=profile, did="did:mock:123")
 
 
 @pytest.mark.asyncio
-def test_supported_methods(resolver):
-    assert resolver.supported_methods
-
-
-@pytest.mark.asyncio
-def test_configure_error(resolver):
-    with pytest.raises(ResolverError):
-        resolver.configure({"fake": "configure"})
+@mock.patch("didcomm_resolver.DIDCommResolver.resolver_connections")
+async def test_raise_exc_supported_methods(mock_resolver_connections, resolver, profile):
+    async def aux_methods(*args):
+        raise Exception("test exception")
+    mock_resolver_connections.side_effect = aux_methods
+    assert not await resolver.supports(profile=profile, did="did:mock:123")
 
 
 @pytest.mark.asyncio
