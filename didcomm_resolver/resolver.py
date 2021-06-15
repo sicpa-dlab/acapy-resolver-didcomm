@@ -27,44 +27,6 @@ from .acapy_tools.awaitable_handler import (
 from .protocol.v0_9 import ResolveDID, ResolveDIDResult
 
 LOGGER = logging.getLogger(__name__)
-DEFAULT_CONFIGURATION = {
-    "methods": [
-        "sov",
-        "abt",
-        "btcr",
-        "erc725",
-        "dom",
-        "stack",
-        "ethr",
-        "web",
-        "v1",
-        "key",
-        "ipid",
-        "jolo",
-        "hacera",
-        "elem",
-        "seraphid",
-        "github",
-        "ccp",
-        "work",
-        "ont",
-        "kilt",
-        "evan",
-        "echo",
-        "factom",
-        "dock",
-        "trust",
-        "io",
-        "bba",
-        "bid",
-        "schema",
-        "ion",
-        "ace",
-        "gatc",
-        "unisot",
-        "icon",
-    ]
-}
 
 
 class ResolverConnection(NamedTuple):
