@@ -1,5 +1,7 @@
 name: Test Actions
-on: push
+on:
+  pull_request:
+  push:
 jobs:
   format:
     name: Formatting (with black)
