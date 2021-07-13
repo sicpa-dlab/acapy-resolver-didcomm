@@ -16,8 +16,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     volumes:
-      - "./mock_resolver:/home/indy/mock_resolver:z"
-      - "./mock_resolver/mock-config.yaml:/home/indy/mock-config.yaml:z"
+      - ./mock_resolver:/home/indy/mock_resolver:Z
     command: start --arg-file default.yml --plugin didcomm_resolver.role.resolver --plugin mock_resolver -e http://resolver:3000 --log-level debug
 
   #*************************************************************
@@ -27,9 +26,6 @@ services:
 
   requester:
     image: didcomm-resolver-testing
-    volumes:
-      - "./mock_resolver/mock-config.yaml:/home/indy/mock-config.yaml:z"
-
     command: start --arg-file default.yml --plugin didcomm_resolver.role.requester -e http://requester:3000 --log-level debug
 
   #*************************************************************
@@ -51,4 +47,3 @@ services:
       depends_on:
         - resolver
         - requester
-      command: sh -c "/wait && pytest -v"
