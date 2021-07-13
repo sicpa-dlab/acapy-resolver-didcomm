@@ -32,7 +32,7 @@ class MockResolver(BaseDIDResolver):
         # Document not found: as_did.method_specific_id != "test"
         if as_did.method_specific_id == "test":
             return {
-                "id": "did:mock:test:mocked_id",
+                "id": "did:mock:test",
                 "@context": "https://www.w3.org/ns/did/v1",
             }
 

@@ -163,7 +163,7 @@ async def test_ResolveDIDResult_handle_fail(resolved_did):
 @mock.patch("didcomm_resolver.protocol.v0_9.ResolveDIDProblemReport")
 async def test_ResolveDIDProblemReport_handle(resolve_did_problem):
     context = MagicMock()
-    context.explain_ltxt = "mocked"
+    context.description = {"en-US": "mocked"}
     resolved_did = ResolveDIDProblemReport()
     context.message = resolve_did_problem
 

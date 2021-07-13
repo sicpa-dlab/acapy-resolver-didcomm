@@ -1,0 +1,1610 @@
+openapi: 3.0.1
+info:
+  title: Aries Cloud Agent + didcomm_resolver Plugin
+  version: v0.7.0
+servers:
+- url: /
+tags:
+- name: DIDcomm-resolver
+  description: Resolver Connection Manager
+  externalDocs:
+    description: Specification
+    url: https://github.com/hyperledger/aries-rfcs/blob/master/features/0124-did-resolution-protocol/README.md
+- name: basicmessage
+  description: Simple messaging
+  externalDocs:
+    description: Specification
+    url: https://github.com/hyperledger/aries-rfcs/tree/527849ec3aa2a8fd47a7bb6c57f918ff8bcb5e8c/features/0095-basic-message
+- name: connection
+  description: Connection management
+  externalDocs:
+    description: Specification
+    url: https://github.com/hyperledger/aries-rfcs/tree/9b0aaa39df7e8bd434126c4b33c097aae78d65bf/features/0160-connection-protocol
+- name: did-exchange
+  description: Connection management via DID exchange
+  externalDocs:
+    description: Specification
+    url: https://github.com/hyperledger/aries-rfcs/tree/25464a5c8f8a17b14edaa4310393df6094ace7b0/features/0023-did-exchange
+- name: out-of-band
+  description: Sign and verify json-ld data
+  externalDocs:
+    description: Design
+    url: https://github.com/hyperledger/aries-rfcs/tree/2da7fc4ee043effa3a9960150e7ba8c9a4628b68/features/0434-outofband
+- name: resolver
+  description: did resolver interface.
+  externalDocs:
+    description: Specification
+    url: https://github.com/hyperledger/aries-cloudagent-python/
+- name: server
+  description: Feature discovery
+  externalDocs:
+    description: Specification
+    url: https://github.com/hyperledger/aries-rfcs/tree/9b7ab9814f2e7d1108f74aca6f3d2e5d62899473/features/0031-discover-features
+- name: trustping
+  description: Trust-ping over connection
+  externalDocs:
+    description: Specification
+    url: https://github.com/hyperledger/aries-rfcs/tree/527849ec3aa2a8fd47a7bb6c57f918ff8bcb5e8c/features/0048-trust-ping
+paths:
+  /connections:
+    get:
+      tags:
+      - connection
+      summary: Query agent-to-agent connections
+      operationId: connections
+      parameters:
+      - name: alias
+        in: query
+        description: Alias
+        schema:
+          type: string
+      - name: invitation_key
+        in: query
+        description: invitation key
+        schema:
+          type: string
+      - name: my_did
+        in: query
+        description: My DID
+        schema:
+          type: string
+      - name: state
+        in: query
+        description: Connection state
+        schema:
+          type: string
+          enum:
+          - init
+          - start
+          - error
+          - active
+          - invitation
+          - request
+          - response
+          - completed
+          - abandoned
+      - name: their_did
+        in: query
+        description: Their DID
+        schema:
+          type: string
+      - name: their_role
+        in: query
+        description: Their role in the connection protocol
+        schema:
+          type: string
+          enum:
+          - invitee
+          - requester
+          - inviter
+          - responder
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionList'
+  /connections/create-invitation:
+    post:
+      tags:
+      - connection
+      summary: Create a new connection invitation
+      operationId: create_invitation
+      parameters:
+      - name: alias
+        in: query
+        description: Alias
+        schema:
+          type: string
+      - name: auto_accept
+        in: query
+        description: Auto-accept connection (defaults to configuration)
+        schema:
+          type: string
+      - name: multi_use
+        in: query
+        description: Create invitation for multiple use (default false)
+        schema:
+          type: boolean
+      - name: public
+        in: query
+        description: Create invitation from public DID (default false)
+        schema:
+          type: boolean
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CreateInvitationRequest'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationResult'
+      x-codegen-request-body-name: body
+  /connections/create-static:
+    post:
+      tags:
+      - connection
+      summary: Create a new static connection
+      operationId: create_static
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/ConnectionStaticRequest'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionStaticResult'
+      x-codegen-request-body-name: body
+  /connections/receive-invitation:
+    post:
+      tags:
+      - connection
+      summary: Receive a new connection invitation
+      operationId: receive_invitation
+      parameters:
+      - name: alias
+        in: query
+        description: Alias
+        schema:
+          type: string
+      - name: auto_accept
+        in: query
+        description: Auto-accept connection (defaults to configuration)
+        schema:
+          type: string
+      - name: mediation_id
+        in: query
+        description: Identifier for active mediation record to be used
+        schema:
+          type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/ReceiveInvitationRequest'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnRecord'
+      x-codegen-request-body-name: body
+  /connections/{conn_id}:
+    get:
+      tags:
+      - connection
+      summary: Fetch a single connection record
+      operationId: get_connection
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnRecord'
+    delete:
+      tags:
+      - connection
+      summary: Remove an existing connection record
+      operationId: delete_connection
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionModuleResponse'
+  /connections/{conn_id}/accept-invitation:
+    post:
+      tags:
+      - connection
+      summary: Accept a stored connection invitation
+      operationId: accept_invitation
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      - name: mediation_id
+        in: query
+        description: Identifier for active mediation record to be used
+        schema:
+          type: string
+      - name: my_endpoint
+        in: query
+        description: My URL endpoint
+        schema:
+          type: string
+      - name: my_label
+        in: query
+        description: Label for connection
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnRecord'
+  /connections/{conn_id}/accept-request:
+    post:
+      tags:
+      - connection
+      summary: Accept a stored connection request
+      operationId: accept_request
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      - name: my_endpoint
+        in: query
+        description: My URL endpoint
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnRecord'
+  /connections/{conn_id}/metadata:
+    get:
+      tags:
+      - connection
+      summary: Fetch connection metadata
+      operationId: get_metadata
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      - name: key
+        in: query
+        description: Key to retrieve.
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionMetadata'
+    post:
+      tags:
+      - connection
+      summary: Set connection metadata
+      operationId: set_metadata
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/ConnectionMetadataSetRequest'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionMetadata'
+      x-codegen-request-body-name: body
+  /connections/{conn_id}/send-message:
+    post:
+      tags:
+      - basicmessage
+      summary: Send a basic message to a connection
+      operationId: send_basic_message
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/SendMessage'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicMessageModuleResponse'
+      x-codegen-request-body-name: body
+  /connections/{conn_id}/send-ping:
+    post:
+      tags:
+      - trustping
+      summary: Send a trust ping to a connection
+      operationId: send_trust_ping
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/PingRequest'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PingRequestResponse'
+      x-codegen-request-body-name: body
+  /didexchange/create-request:
+    post:
+      tags:
+      - did-exchange
+      summary: Create request against public DID's implicit invitation
+      parameters:
+      - name: their_public_did
+        in: query
+        description: Public DID to which to request connection
+        required: true
+        schema:
+          type: string
+      - name: mediation_id
+        in: query
+        description: Identifier for active mediation record to be used
+        schema:
+          type: string
+      - name: my_endpoint
+        in: query
+        description: My URL endpoint
+        schema:
+          type: string
+      - name: my_label
+        in: query
+        description: Label for connection request
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DIDXRequest'
+  /didexchange/receive-request:
+    post:
+      tags:
+      - did-exchange
+      summary: Receive request against public DID's implicit invitation
+      parameters:
+      - name: alias
+        in: query
+        description: Alias for connection
+        schema:
+          type: string
+      - name: auto_accept
+        in: query
+        description: Auto-accept connection (defaults to configuration)
+        schema:
+          type: string
+      - name: mediation_id
+        in: query
+        description: Identifier for active mediation record to be used
+        schema:
+          type: string
+      - name: my_endpoint
+        in: query
+        description: My URL endpoint
+        schema:
+          type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/DIDXRequest'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnRecord'
+      x-codegen-request-body-name: body
+  /didexchange/{conn_id}/accept-invitation:
+    post:
+      tags:
+      - did-exchange
+      summary: Accept a stored connection invitation
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      - name: my_endpoint
+        in: query
+        description: My URL endpoint
+        schema:
+          type: string
+      - name: my_label
+        in: query
+        description: Label for connection request
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnRecord'
+  /didexchange/{conn_id}/accept-request:
+    post:
+      tags:
+      - did-exchange
+      summary: Accept a stored connection request
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      - name: mediation_id
+        in: query
+        description: Identifier for active mediation record to be used
+        schema:
+          type: string
+      - name: my_endpoint
+        in: query
+        description: My URL endpoint
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnRecord'
+  /features:
+    get:
+      tags:
+      - server
+      summary: Query supported features
+      parameters:
+      - name: query
+        in: query
+        description: Query
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+  /jsonld/sign:
+    post:
+      tags:
+      - jsonld
+      summary: Sign a JSON-LD structure and return it
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/SignRequest'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignResponse'
+      x-codegen-request-body-name: body
+  /jsonld/verify:
+    post:
+      tags:
+      - jsonld
+      summary: Verify a JSON-LD structure.
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/VerifyRequest'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyResponse'
+      x-codegen-request-body-name: body
+  /out-of-band/create-invitation:
+    post:
+      tags:
+      - out-of-band
+      summary: Create a new connection invitation
+      parameters:
+      - name: auto_accept
+        in: query
+        description: Auto-accept connection (defaults to configuration)
+        schema:
+          type: string
+      - name: multi_use
+        in: query
+        description: Create invitation for multiple use (default false)
+        schema:
+          type: boolean
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/InvitationCreateRequest'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationRecord'
+      x-codegen-request-body-name: body
+  /out-of-band/receive-invitation:
+    post:
+      tags:
+      - out-of-band
+      summary: Receive a new connection invitation
+      parameters:
+      - name: alias
+        in: query
+        description: Alias for connection
+        schema:
+          type: string
+      - name: auto_accept
+        in: query
+        description: Auto-accept connection (defaults to configuration)
+        schema:
+          type: string
+      - name: mediation_id
+        in: query
+        description: Identifier for active mediation record to be used
+        schema:
+          type: string
+      - name: use_existing_connection
+        in: query
+        description: Use an existing connection, if possible
+        schema:
+          type: boolean
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/InvitationReceiveRequest'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnRecord'
+      x-codegen-request-body-name: body
+  /plugins:
+    get:
+      tags:
+      - server
+      summary: Fetch the list of loaded plugins
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminModules'
+  /resolver/connections:
+    get:
+      tags:
+      - didcomm-resolver
+      summary: List DIDcomm resolvers.
+      operationId: resolver_connections
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolverConnectionList'
+  /resolver/connections/{conn_id}:
+    get:
+      tags:
+      - didcomm-resolver
+      summary: Fetch DIDComm Resolver details.
+      operationId: resolver_connection
+      parameters:
+      - name: conn_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolverConnection'
+    delete:
+      tags:
+      - didcomm-resolver
+      summary: Remove an existing connection record.
+      operationId: unset_resolver_connection
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionRemoveResponse'
+  /resolver/register/{conn_id}:
+    post:
+      tags:
+      - didcomm-resolver
+      summary: Register DIDcomm resolver.
+      operationId: register_resolver_connection
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/ConnectionRegisterRequest'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolverConnection'
+      x-codegen-request-body-name: body
+  /resolver/resolve/{did}:
+    get:
+      tags:
+      - resolver
+      summary: Retrieve doc for requested did
+      operationId: resolve
+      parameters:
+      - name: did
+        in: path
+        description: decentralize identifier(DID)
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DIDDoc'
+  /resolver/update/{conn_id}:
+    post:
+      tags:
+      - didcomm-resolver
+      summary: Update DIDcomm resolvable methods.
+      parameters:
+      - name: conn_id
+        in: path
+        description: Connection identifier
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/ConnectionRegisterRequest'
+        required: false
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolverConnection'
+      x-codegen-request-body-name: body
+  /shutdown:
+    get:
+      tags:
+      - server
+      summary: Shut down server
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminShutdown'
+  /status:
+    get:
+      tags:
+      - server
+      summary: Fetch the server status
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStatus'
+  /status/config:
+    get:
+      tags:
+      - server
+      summary: Fetch the server configuration
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminConfig'
+  /status/live:
+    get:
+      tags:
+      - server
+      summary: Liveliness check
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStatusLiveliness'
+  /status/ready:
+    get:
+      tags:
+      - server
+      summary: Readiness check
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStatusReadiness'
+  /status/reset:
+    post:
+      tags:
+      - server
+      summary: Reset statistics
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminReset'
+components:
+  schemas:
+    ActionMenuFetchResult:
+      type: object
+      properties:
+        result:
+          type: object
+          description: Action menu
+          allOf:
+          - $ref: '#/definitions/Menu'
+    ActionMenuModulesResult:
+      type: object
+    AdminAPIMessageTracing:
+      type: object
+      properties:
+        trace:
+          type: boolean
+          description: Record trace information, based on agent configuration
+    AdminConfig:
+      type: object
+      properties:
+        config:
+          type: object
+          properties: {}
+          description: Configuration settings
+    AdminMediationDeny:
+      type: object
+      properties:
+        mediator_terms:
+          type: array
+          description: List of mediator rules for recipient
+          items:
+            type: string
+            description: Indicate terms to which the mediator requires the recipient
+              to agree
+        recipient_terms:
+          type: array
+          description: List of recipient rules for mediation
+          items:
+            type: string
+            description: Indicate terms to which the recipient requires the mediator
+              to agree
+    AdminModules:
+      type: object
+      properties:
+        result:
+          type: array
+          description: List of admin modules
+          items:
+            type: string
+            description: admin module
+    AdminReset:
+      type: object
+    AdminShutdown:
+      type: object
+    AdminStatus:
+      type: object
+      properties:
+        conductor:
+          type: object
+          properties: {}
+          description: Conductor statistics
+        label:
+          type: string
+          description: Default label
+          nullable: true
+        timing:
+          type: object
+          properties: {}
+          description: Timing results
+        version:
+          type: string
+          description: Version code
+    AdminStatusLiveliness:
+      type: object
+      properties:
+        alive:
+          type: boolean
+          description: Liveliness status
+    AdminStatusReadiness:
+      type: object
+      properties:
+        ready:
+          type: boolean
+          description: Readiness status
+    AttachDecorator:
+      required:
+      - data
+      type: object
+      properties:
+        '@id':
+          type: string
+          description: Attachment identifier
+        byte_count:
+          type: integer
+          description: Byte count of data included by reference
+          format: int32
+        data:
+          $ref: '#/components/schemas/AttachDecoratorData'
+        description:
+          type: string
+          description: Human-readable description of content
+        filename:
+          type: string
+          description: File name
+        lastmod_time:
+          type: string
+          description: Hint regarding last modification datetime, in ISO-8601 format
+        mime-type:
+          type: string
+          description: MIME type
+    AttachDecoratorData:
+      type: object
+      properties:
+        base64:
+          type: string
+          description: Base64-encoded data
+        json:
+          type: object
+          properties: {}
+          description: JSON-serialized data
+        jws:
+          type: object
+          description: Detached Java Web Signature
+          allOf:
+          - $ref: '#/definitions/AttachDecoratorDataJWS'
+        links:
+          type: array
+          description: List of hypertext links to data
+          items:
+            type: string
+        sha256:
+          type: string
+          description: SHA256 hash (binhex encoded) of content
+    AttachDecoratorData1JWS:
+      required:
+      - header
+      - signature
+      type: object
+      properties:
+        header:
+          $ref: '#/components/schemas/AttachDecoratorDataJWSHeader'
+        protected:
+          type: string
+          description: protected JWS header
+        signature:
+          type: string
+          description: signature
+    AttachDecoratorDataJWS:
+      type: object
+      properties:
+        header:
+          $ref: '#/components/schemas/AttachDecoratorDataJWSHeader'
+        protected:
+          type: string
+          description: protected JWS header
+        signature:
+          type: string
+          description: signature
+        signatures:
+          type: array
+          description: List of signatures
+          items:
+            $ref: '#/components/schemas/AttachDecoratorData1JWS'
+    AttachDecoratorDataJWSHeader:
+      required:
+      - kid
+      type: object
+      properties:
+        kid:
+          type: string
+          description: Key identifier, in W3C did:key or DID URL format
+    AttachmentDef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Attachment identifier
+        type:
+          type: string
+          description: Attachment type
+          enum:
+          - credential-offer
+          - present-proof
+    BasicMessageModuleResponse:
+      type: object
+    ConnRecord:
+      type: object
+      required:
+        - connection_id
+      properties:
+        accept:
+          type: string
+          description: 'Connection acceptance: manual or auto'
+          enum:
+          - manual
+          - auto
+        alias:
+          type: string
+          description: Optional alias to apply to connection for later use
+        connection_id:
+          type: string
+          description: Connection identifier
+        created_at:
+          type: string
+          description: Time of record creation
+        error_msg:
+          type: string
+          description: Error message
+        inbound_connection_id:
+          type: string
+          description: Inbound routing connection id to use
+        invitation_key:
+          type: string
+          description: Public key for connection
+        invitation_mode:
+          type: string
+          description: Invitation mode
+          enum:
+          - once
+          - multi
+          - static
+        invitation_msg_id:
+          type: string
+          description: ID of out-of-band invitation message
+        my_did:
+          type: string
+          description: Our DID for connection
+        request_id:
+          type: string
+          description: Connection request identifier
+        rfc23_state:
+          type: string
+          description: State per RFC 23
+          readOnly: true
+        routing_state:
+          type: string
+          description: Routing state of connection
+          enum:
+          - none
+          - request
+          - active
+          - error
+        state:
+          type: string
+          description: Current record state
+        their_did:
+          type: string
+          description: Their DID for connection
+        their_label:
+          type: string
+          description: Their label for connection
+        their_public_did:
+          type: string
+          description: Other agent's public DID for connection
+        their_role:
+          type: string
+          description: Their role in the connection protocol
+          enum:
+          - invitee
+          - requester
+          - inviter
+          - responder
+        updated_at:
+          type: string
+          description: Time of last record update
+    ConnectionInvitation:
+      type: object
+      properties:
+        '@id':
+          type: string
+          description: Message identifier
+        '@type':
+          type: string
+          description: Message type
+          readOnly: true
+        did:
+          type: string
+          description: DID for connection invitation
+        imageUrl:
+          type: string
+          description: Optional image URL for connection invitation
+          format: url
+          nullable: true
+        label:
+          type: string
+          description: Optional label for connection invitation
+        recipientKeys:
+          type: array
+          description: List of recipient keys
+          items:
+            type: string
+            description: Recipient public key
+        routingKeys:
+          type: array
+          description: List of routing keys
+          items:
+            type: string
+            description: Routing key
+        serviceEndpoint:
+          type: string
+          description: Service endpoint at which to reach this agent
+    ConnectionList:
+      type: object
+      properties:
+        results:
+          type: array
+          description: List of connection records
+          items:
+            $ref: '#/components/schemas/ConnRecord'
+    ConnectionMetadata:
+      type: object
+      properties:
+        results:
+          type: object
+          properties: {}
+          description: Dictionary of metadata associated with connection.
+    ConnectionMetadataSetRequest:
+      required:
+      - metadata
+      type: object
+      properties:
+        metadata:
+          type: object
+          properties: {}
+          description: Dictionary of metadata to set for connection.
+    ConnectionModuleResponse:
+      type: object
+    ConnectionRegisterRequest:
+      type: object
+      properties:
+        methods:
+          type: array
+          description: List of supported did methods.
+          items:
+            type: string
+            description: Did method.
+    ConnectionRemoveResponse:
+      type: object
+      properties:
+        removed:
+          type: string
+          description: Connection id of removed resolver.
+    ConnectionStaticRequest:
+      type: object
+      properties:
+        alias:
+          type: string
+          description: Alias to assign to this connection
+        my_did:
+          type: string
+          description: Local DID
+        my_seed:
+          type: string
+          description: Seed to use for the local DID
+        their_did:
+          type: string
+          description: Remote DID
+        their_endpoint:
+          type: string
+          description: URL endpoint for other party
+        their_label:
+          type: string
+          description: Other party's label for this connection
+        their_seed:
+          type: string
+          description: Seed to use for the remote DID
+        their_verkey:
+          type: string
+          description: Remote verification key
+    ConnectionStaticResult:
+      required:
+      - mv_verkey
+      - my_did
+      - my_endpoint
+      - record
+      - their_did
+      - their_verkey
+      type: object
+      properties:
+        mv_verkey:
+          type: string
+          description: My verification key
+        my_did:
+          type: string
+          description: Local DID
+        my_endpoint:
+          type: string
+          description: My URL endpoint
+        record:
+          $ref: '#/components/schemas/ConnRecord'
+        their_did:
+          type: string
+          description: Remote DID
+        their_verkey:
+          type: string
+          description: Remote verification key
+    CreateInvitationRequest:
+      type: object
+      properties:
+        mediation_id:
+          type: string
+          description: Identifier for active mediation record to be used
+        metadata:
+          type: object
+          properties: {}
+          description: Optional metadata to attach to the connection created with
+            the invitation
+        my_label:
+          type: string
+          description: Optional label for connection invitation
+        recipient_keys:
+          type: array
+          description: List of recipient keys
+          items:
+            type: string
+            description: Recipient public key
+        routing_keys:
+          type: array
+          description: List of routing keys
+          items:
+            type: string
+            description: Routing key
+        service_endpoint:
+          type: string
+          description: Connection endpoint
+    DIDDoc:
+      type: object
+    DIDXRequest:
+      required:
+      - label
+      type: object
+      properties:
+        '@id':
+          type: string
+          description: Message identifier
+        '@type':
+          type: string
+          description: Message type
+          readOnly: true
+        did:
+          type: string
+          description: DID of exchange
+        did_doc~attach:
+          type: object
+          description: As signed attachment, DID Doc associated with DID
+          allOf:
+          - $ref: '#/definitions/AttachDecorator'
+        label:
+          type: string
+          description: Label for DID exchange request
+    Date:
+      required:
+      - expires_time
+      type: object
+      properties:
+        expires_time:
+          type: string
+          description: Expiry Date
+          format: date-time
+    Generated:
+      required:
+      - credential
+      - options
+      type: object
+      properties:
+        credential:
+          type: object
+          properties: {}
+          description: Credential to sign
+        options:
+          $ref: '#/components/schemas/Generated'
+    InvitationCreateRequest:
+      type: object
+      properties:
+        alias:
+          type: string
+          description: Alias for connection
+        attachments:
+          type: array
+          description: Optional invitation attachments
+          items:
+            $ref: '#/components/schemas/AttachmentDef'
+        handshake_protocols:
+          type: array
+          items:
+            type: string
+            description: Handshake protocol to specify in invitation
+        mediation_id:
+          type: string
+          description: Identifier for active mediation record to be used
+        metadata:
+          type: object
+          properties: {}
+          description: Optional metadata to attach to the connection created with
+            the invitation
+        my_label:
+          type: string
+          description: Label for connection invitation
+        use_public_did:
+          type: boolean
+          description: Whether to use public DID in invitation
+    InvitationReceiveRequest:
+      type: object
+      properties:
+        '@id':
+          type: string
+          description: Message identifier
+        '@type':
+          type: string
+          description: Message type
+          readOnly: true
+        handshake_protocols:
+          type: array
+          items:
+            type: string
+            description: Handshake protocol
+        label:
+          type: string
+          description: Optional label
+        requests~attach:
+          type: array
+          description: Optional request attachment
+          items:
+            $ref: '#/components/schemas/AttachDecorator'
+        service_blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Service'
+        service_dids:
+          type: array
+          items:
+            type: string
+            description: Service DID
+        services:
+          type: object
+    InvitationRecord:
+      type: object
+      properties:
+        created_at:
+          type: string
+          description: Time of record creation
+        invi_msg_id:
+          type: string
+          description: Invitation message identifier
+        invitation:
+          type: object
+          properties: {}
+          description: Out of band invitation object
+        invitation_id:
+          type: string
+          description: Invitation record identifier
+        invitation_url:
+          type: string
+          description: Invitation message URL
+        state:
+          type: string
+          description: Out of band message exchange state
+        trace:
+          type: boolean
+          description: Record trace information, based on agent configuration
+        updated_at:
+          type: string
+          description: Time of last record update
+    InvitationResult:
+      type: object
+      required:
+        - invitation
+        - invitation_url
+        - connection_id
+      properties:
+        connection_id:
+          type: string
+          description: Connection identifier
+        invitation:
+          $ref: '#/components/schemas/ConnectionInvitation'
+        invitation_url:
+          type: string
+          description: Invitation URL
+    PingRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+          description: Comment for the ping message
+          nullable: true
+    PingRequestResponse:
+      type: object
+      properties:
+        thread_id:
+          type: string
+          description: Thread ID of the ping message
+    QueryResult:
+      type: object
+      properties:
+        results:
+          type: object
+          additionalProperties:
+            type: object
+            properties: {}
+            description: Protocol descriptor
+          description: Query results keyed by protocol
+    ReceiveInvitationRequest:
+      type: object
+      properties:
+        '@id':
+          type: string
+          description: Message identifier
+        '@type':
+          type: string
+          description: Message type
+          readOnly: true
+        did:
+          type: string
+          description: DID for connection invitation
+        imageUrl:
+          type: string
+          description: Optional image URL for connection invitation
+          format: url
+          nullable: true
+        label:
+          type: string
+          description: Optional label for connection invitation
+        recipientKeys:
+          type: array
+          description: List of recipient keys
+          items:
+            type: string
+            description: Recipient public key
+        routingKeys:
+          type: array
+          description: List of routing keys
+          items:
+            type: string
+            description: Routing key
+        serviceEndpoint:
+          type: string
+          description: Service endpoint at which to reach this agent
+    ResolverConnection:
+      type: object
+      properties:
+        connection_id:
+          type: string
+        methods:
+          type: array
+          items:
+            type: string
+    ResolverConnectionList:
+      type: object
+      required:
+        - results
+      properties:
+        results:
+          type: array
+          description: List of connections registered as did resolvers.
+          items:
+            $ref: '#/components/schemas/ResolverConnection'
+    SendMessage:
+      type: object
+      properties:
+        content:
+          type: string
+          description: Message content
+    Service:
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        did:
+          type: string
+          description: Service DID
+        id:
+          type: string
+          description: Service identifier
+        recipientKeys:
+          type: array
+          description: List of recipient keys
+          items:
+            type: string
+            description: Recipient public key
+        routingKeys:
+          type: array
+          description: List of routing keys
+          items:
+            type: string
+            description: Routing key
+        serviceEndpoint:
+          type: string
+          description: Service endpoint at which to reach this agent
+        type:
+          type: string
+          description: Service type
+    SignRequest:
+      required:
+      - doc
+      - verkey
+      type: object
+      properties:
+        doc:
+          $ref: '#/components/schemas/Generated'
+        verkey:
+          type: string
+          description: Verkey to use for signing
+    SignResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error text
+        signed_doc:
+          type: object
+          properties: {}
+          description: Signed document
+    VerifyRequest:
+      required:
+      - doc
+      type: object
+      properties:
+        doc:
+          type: object
+          properties: {}
+          description: Credential to verify
+        verkey:
+          type: string
+          description: Verkey to use for doc verification
+    VerifyResponse:
+      required:
+      - valid
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error text
+        valid:
+          type: boolean
