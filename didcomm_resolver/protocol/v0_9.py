@@ -108,7 +108,7 @@ class ResolveDID(DIDResolutionMessage):
         except Exception as err:
             LOGGER.error(str(err))
             msg = f"Could not resolve DID {context.message.did}"
-            reply_msg = ResolveDIDProblemReport(explain_ltxt=msg)
+            reply_msg = ResolveDIDProblemReport(description={"en-US": msg})
             raise_exception = True
 
         else:
@@ -234,12 +234,12 @@ class ResolveDIDProblemReport(DIDResolutionMessage, ProblemReport):
         ) -> None:
             """Handle problem reports."""
             report: ResolveDIDProblemReport = context.message
-            LOGGER.warning("Received problem report: %s", report.explain_ltxt)
+            LOGGER.warning("Received problem report: %s", report.description)
 
         def map_exception(self, message: "ResolveDIDProblemReport"):
             """Map report message to an exception."""
             return DIDNotFound(
-                f"DID not found on remote resolver: {message.explain_ltxt}"
+                f"DID not found on remote resolver: {message.description}"
             )
 
 
