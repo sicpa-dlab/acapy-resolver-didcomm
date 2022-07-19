@@ -1,4 +1,4 @@
-FROM bcgovimages/aries-cloudagent:py36-1.16-0_0.6.0
+FROM bcgovimages/aries-cloudagent:py36-1.16-0_0.7.4
 
 # Make site packages location more accessible (for use with volumes)
 RUN ln -s $(pyenv prefix)/lib/python3.6/site-packages site-packages
