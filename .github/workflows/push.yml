@@ -7,21 +7,21 @@ jobs:
     name: Formatting (with black)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python 3.6
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.6
       - name: Cache python environment
         id: cache-env
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.pythonLocation }}
-          key: ${{ runner.os }}-formatting-black-20.8b1
+          key: ${{ runner.os }}-formatting-black-22.8.0
       - name: Install black
         if: steps.cache-env.outputs.cache-hit != 'true'
         run: |
-          pip install black==20.8b1
+          pip install black==22.8.0
       - name: Black Format Check
         run: |
           black --check didcomm_resolver
@@ -34,36 +34,16 @@ jobs:
         python-version: [3.6, 3.7, 3.8, 3.9]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Cache python environment
-        id: cache-env
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ runner.os }}-testing-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
-      - name: Install poetry
-        if: steps.cache-env.outputs.cache-hit != 'true'
-        run: |
-          pip install poetry==1.1.5
-      - name: Setup poetry environment
-        id: setup-poetry-env
-        run: |
-          poetry env use $(which python)
-          echo "::set-output name=poetry-env::$(poetry env info --path)"
-      - name: Cache poetry environment
-        id: cache-poetry
-        uses: actions/cache@v2
-        with:
-          path: ${{ steps.setup-poetry-env.outputs.poetry-env }}
-          key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+          cache: poetry
       - name: Install dependencies
-        if: steps.cache-poetry.outputs.cache-hit != 'true'
-        run: |
-          poetry install
+        run: poetry install
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
@@ -78,7 +58,7 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: integration tests
         run: |
           docker-compose -f int/docker-compose.yml run tests && docker-compose -f int/docker-compose.yml stop
